@@ -13,6 +13,7 @@ import Result from './pages/Result';
 import History from './pages/History';
 import CreateQuiz from './pages/CreateQuiz';
 import Leaderboard from './pages/Leaderboard';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -77,6 +78,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

@@ -47,22 +47,26 @@ export const Navbar: React.FC = () => {
                     History
                   </Button>
                 </Link>
-                <div className="flex items-center space-x-2 pl-4 border-l border-slate-100">
-                  <div className="hidden md:block text-right">
-                    <div className="flex items-center justify-end space-x-1">
-                      <Zap className="h-3 w-3 text-accent-amber fill-accent-amber" />
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.xp} XP</p>
+                  <Link to="/profile" className="flex items-center space-x-2 pl-4 border-l border-slate-100">
+                    <div className="hidden md:block text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        <Zap className="h-3 w-3 text-accent-amber fill-accent-amber" />
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.xp} XP</p>
+                      </div>
+                      <p className="text-sm font-black text-slate-900">Level {user.level || 1}</p>
                     </div>
-                    <p className="text-sm font-black text-slate-900">Level {user.level || 1}</p>
-                  </div>
-                  <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-primary-500/10 to-accent-violet/10 flex items-center justify-center text-primary-600 relative overflow-hidden group/avatar">
-                    <UserIcon className="h-5 w-5" />
-                    <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover/avatar:opacity-10 transition-opacity" />
-                  </div>
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-primary-500/10 to-accent-violet/10 flex items-center justify-center text-primary-600 relative overflow-hidden group/avatar">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.username} className="h-full w-full object-cover" />
+                      ) : (
+                        <UserIcon className="h-5 w-5" />
+                      )}
+                      <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover/avatar:opacity-10 transition-opacity" />
+                    </div>
+                  </Link>
                   <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-400 hover:text-rose-500">
                     <LogOut className="h-5 w-5" />
                   </Button>
-                </div>
               </>
             ) : (
               <div className="flex items-center space-x-2">

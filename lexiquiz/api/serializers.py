@@ -6,10 +6,19 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     xp = serializers.ReadOnlyField(source='profile.xp')
     level = serializers.ReadOnlyField(source='profile.level')
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'xp', 'level')
+        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar')
+
+    def get_avatar(self, obj):
+        if obj.profile.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile.avatar.url)
+            return obj.profile.avatar.url
+        return None
 
     def create(self, validated_data):
         user = User.objects.create_user(

@@ -17,12 +17,82 @@ class AuthViewSet(viewsets.GenericViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
-        if request.user.is_authenticated:
+        if not request.user.is_authenticated:
+            return Response({"error": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if request.method == 'GET':
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)
-        return Response({"error": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        elif request.method == 'PATCH':
+            user = request.user
+            profile = user.profile
+            
+            # Update User fields
+            username = request.data.get('username')
+            email = request.data.get('email')
+            if username:
+                user.username = username
+            if email:
+                user.email = email
+            user.save()
+            
+            # Update Profile fields (avatar)
+            avatar = request.FILES.get('avatar')
+            if avatar:
+                profile.avatar = avatar
+                profile.save()
+                
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        if not request.user.is_authenticated:
+            return Response({"error": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        user = request.user
+        quizzes_created = Quiz.objects.filter(creator=user).count()
+        results_taken = Result.objects.filter(user=user).count()
+        
+        # Calculate average score percentage
+        results = Result.objects.filter(user=user)
+        avg_score = 0
+        if results.exists():
+            total_percentage = sum((r.score / r.total_questions) * 100 for r in results if r.total_questions > 0)
+            avg_score = total_percentage / results_taken
+            
+        # Badge Definitions
+        all_badges = [
+            {"id": "explorer", "name": "Explorer", "icon": "Compass", "color": "blue", "requirement": "Reach Level 5"},
+            {"id": "veteran", "name": "Veteran", "icon": "Shield", "color": "purple", "requirement": "Reach Level 10"},
+            {"id": "architect", "name": "Architect", "icon": "Layout", "color": "emerald", "requirement": "Create your first quiz"},
+            {"id": "mastermind", "name": "Mastermind", "icon": "Brain", "color": "rose", "requirement": "Create 5 or more quizzes"},
+            {"id": "scholar", "name": "Scholar", "icon": "GraduationCap", "color": "amber", "requirement": "Complete 10 or more quizzes"},
+            {"id": "genius", "name": "Genius", "icon": "Sparkles", "color": "indigo", "requirement": "Avg score 90%+ on at least 3 quizzes"},
+        ]
+        
+        badges_data = []
+        for b in all_badges:
+            earned = False
+            if b["id"] == "explorer" and user.profile.level >= 5: earned = True
+            elif b["id"] == "veteran" and user.profile.level >= 10: earned = True
+            elif b["id"] == "architect" and quizzes_created >= 1: earned = True
+            elif b["id"] == "mastermind" and quizzes_created >= 5: earned = True
+            elif b["id"] == "scholar" and results_taken >= 10: earned = True
+            elif b["id"] == "genius" and avg_score >= 90 and results_taken >= 3: earned = True
+            
+            b["earned"] = earned
+            badges_data.append(b)
+
+        return Response({
+            "quizzes_created": quizzes_created,
+            "results_taken": results_taken,
+            "avg_score": round(avg_score, 1),
+            "badges": badges_data
+        })
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
@@ -46,6 +116,12 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def my_quizzes(self, request):
+        quizzes = Quiz.objects.filter(creator=request.user).order_by('-created_at')
+        serializer = QuizSerializer(quizzes, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
     def generate_from_file(self, request):
