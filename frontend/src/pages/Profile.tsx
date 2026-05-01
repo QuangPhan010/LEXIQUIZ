@@ -23,7 +23,12 @@ import {
   Layout,
   Brain,
   GraduationCap,
-  Sparkles
+  Sparkles,
+  Flame,
+  Coins,
+  ChevronRight,
+  TrendingUp,
+  Award
 } from 'lucide-react';
 
 interface Stats {
@@ -55,6 +60,8 @@ const Profile: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
+  const [quests, setQuests] = useState<any[]>([]);
+  const [skillXP, setSkillXP] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -72,12 +79,16 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, quizzesRes] = await Promise.all([
+        const [statsRes, quizzesRes, questsRes, skillsRes] = await Promise.all([
           api.get('/auth/stats/'),
-          api.get('/quizzes/my_quizzes/')
+          api.get('/quizzes/my_quizzes/'),
+          api.get('/quests/'),
+          api.get('/skills/')
         ]);
         setStats(statsRes.data);
         setMyQuizzes(quizzesRes.data);
+        setQuests(questsRes.data);
+        setSkillXP(skillsRes.data);
       } catch (err) {
         console.error('Failed to fetch profile data', err);
       } finally {
@@ -129,6 +140,19 @@ const Profile: React.FC = () => {
       setError(err.response?.data?.error || 'Failed to update profile');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleClaimQuest = async (questId: number) => {
+    try {
+      const res = await api.post(`/quests/${questId}/claim/`);
+      setSuccess(`Claimed ${res.data.coins} coins and ${res.data.xp} XP!`);
+      // Update local state
+      setQuests(quests.map(q => q.id === questId ? { ...q, is_claimed: true } : q));
+      refreshUser();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Failed to claim quest', err);
     }
   };
 
@@ -201,6 +225,27 @@ const Profile: React.FC = () => {
                     style={{ width: `${user?.xp % 100}%` }}
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                  <div className="bg-orange-50 rounded-2xl p-3 flex items-center space-x-3 border border-orange-100/50">
+                    <div className="bg-orange-500 text-white p-1.5 rounded-lg">
+                      <Flame className="h-4 w-4 fill-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest leading-none">Streak</p>
+                      <p className="text-sm font-black text-orange-600">{user?.streak_count || 0} Days</p>
+                    </div>
+                  </div>
+                  <div className="bg-amber-50 rounded-2xl p-3 flex items-center space-x-3 border border-amber-100/50">
+                    <div className="bg-amber-500 text-white p-1.5 rounded-lg">
+                      <Coins className="h-4 w-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest leading-none">Coins</p>
+                      <p className="text-sm font-black text-amber-600">{user?.coins || 0}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
 
@@ -254,7 +299,7 @@ const Profile: React.FC = () => {
                       blue: 'bg-blue-50 text-blue-600 border-blue-100',
                       purple: 'bg-purple-50 text-purple-600 border-purple-100',
                       emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                      rose: 'bg-rose-50 text-rose-600 border-rose-100',
+                      rose: 'bg-rose-50 text-rose-500 border-rose-100',
                       amber: 'bg-amber-50 text-amber-600 border-amber-100',
                       indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
                     }[badge.color as keyof typeof colorMap] || 'bg-slate-50 text-slate-600 border-slate-100';
@@ -267,13 +312,11 @@ const Profile: React.FC = () => {
                           <IconComponent className="h-7 w-7" />
                         </div>
                         
-                        {/* Custom Tooltip - Solid background, no inheritance of parent opacity */}
                         <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[11px] px-4 py-2.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-all whitespace-nowrap z-50 pointer-events-none font-black shadow-2xl translate-y-2 group-hover:translate-y-0 border border-slate-800">
                           <p className="text-white mb-1 tracking-wide">{badge.name}</p>
                           <p className={badge.earned ? 'text-accent-emerald' : 'text-slate-400'}>
                             {badge.earned ? '✓ UNLOCKED' : `🔒 ${badge.requirement.toUpperCase()}`}
                           </p>
-                          {/* Tooltip Arrow */}
                           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45 border-l border-t border-slate-800" />
                         </div>
                       </div>
@@ -284,6 +327,46 @@ const Profile: React.FC = () => {
                     No badges earned yet. Keep playing!
                   </div>
                 )}
+              </div>
+            </Card>
+
+            {/* Skill Tree Summary */}
+            <Card className="p-8 border-0 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Skill Mastery</h3>
+                <TrendingUp className="h-4 w-4 text-primary-500" />
+              </div>
+              
+              <div className="space-y-6">
+                {skillXP.length > 0 ? (
+                  skillXP.map((skill) => (
+                    <div key={skill.id}>
+                      <div className="flex justify-between items-end mb-2">
+                        <div>
+                          <p className="text-xs font-black text-slate-900">{skill.category_name}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Level {skill.level}</p>
+                        </div>
+                        <p className="text-[10px] font-black text-primary-600">{skill.xp} XP</p>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${skill.xp % 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-slate-400 text-xs font-medium italic">
+                    Take quizzes in different categories to build your skill tree!
+                  </div>
+                )}
+                
+                <Link to="/skills" className="block text-center pt-2">
+                  <Button variant="outline" size="sm" className="w-full rounded-xl text-[10px] h-9 border-slate-100 hover:bg-slate-50 text-slate-500">
+                    View Full Skill Tree <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
             </Card>
           </div>
@@ -373,20 +456,80 @@ const Profile: React.FC = () => {
                 </div>
               </form>
               
-              <div className="mt-12 p-8 rounded-[32px] bg-primary-50/50 border border-primary-100/50">
-                <div className="flex items-start space-x-6">
-                  <div className="h-14 w-14 rounded-2xl bg-white shadow-xl shadow-primary-500/10 flex items-center justify-center text-primary-600 shrink-0">
-                    <Zap className="h-7 w-7 fill-primary-600" />
+              {/* Daily Quests Section */}
+              <div className="mt-12">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 rounded-2xl bg-accent-violet/10 flex items-center justify-center text-accent-violet">
+                      <Award className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-900">Daily Quests</h2>
+                      <p className="text-slate-400 font-medium">Complete daily tasks to earn extra rewards.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 mb-2">LEXIQUIZ PRO</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed mb-4">
-                      You are currently using the free version. Upgrade to Pro to unlock unlimited AI quiz generation, advanced analytics, and custom branding.
-                    </p>
-                    <Button variant="outline" size="sm" className="rounded-xl border-primary-200 text-primary-600 hover:bg-primary-50">
-                      Learn More
-                    </Button>
-                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {quests.length > 0 ? (
+                    quests.map((uq) => (
+                      <div key={uq.id} className={`p-6 rounded-[32px] border-2 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 ${
+                        uq.is_claimed ? 'bg-slate-50 border-slate-100 opacity-60' : uq.is_completed ? 'bg-accent-emerald/5 border-accent-emerald/20' : 'bg-white border-slate-100'
+                      }`}>
+                        <div className="flex items-start space-x-4">
+                          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                            uq.is_completed ? 'bg-accent-emerald text-white' : 'bg-slate-100 text-slate-400'
+                          }`}>
+                            <Zap className="h-6 w-6 fill-current" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-black text-slate-800">{uq.quest.title}</h3>
+                            <p className="text-slate-500 text-sm">{uq.quest.description}</p>
+                            <div className="mt-4 flex items-center space-x-4">
+                              <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-1000 ${uq.is_completed ? 'bg-accent-emerald' : 'bg-primary-500'}`}
+                                  style={{ width: `${(uq.progress / uq.quest.requirement_value) * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-black text-slate-400 uppercase">
+                                {uq.progress} / {uq.quest.requirement_value}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-6 md:border-l border-slate-100 md:pl-6">
+                          <div className="text-center">
+                            <div className="flex items-center justify-center space-x-1 text-amber-600 font-black mb-1">
+                              <Coins className="h-4 w-4" />
+                              <span>{uq.quest.reward_coins}</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coins</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center space-x-1 text-primary-600 font-black mb-1">
+                              <Zap className="h-4 w-4 fill-primary-600" />
+                              <span>{uq.quest.reward_xp}</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">XP</p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            className={`rounded-xl px-6 h-10 ${uq.is_claimed ? 'bg-slate-200 text-slate-400' : uq.is_completed ? 'bg-accent-emerald hover:bg-accent-emerald/90' : 'bg-slate-100 text-slate-400'}`}
+                            disabled={!uq.is_completed || uq.is_claimed}
+                            onClick={() => handleClaimQuest(uq.id)}
+                          >
+                            {uq.is_claimed ? 'Claimed' : uq.is_completed ? 'Claim' : 'Locked'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-12 text-center bg-slate-50/50 rounded-[40px] border-2 border-dashed border-slate-200">
+                      <p className="text-slate-400 font-bold">No quests available for today.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

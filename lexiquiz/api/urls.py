@@ -1,6 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import QuizViewSet, ResultViewSet, AuthViewSet, CategoryViewSet, LeaderboardViewSet
+from .views import (
+    QuizViewSet, ResultViewSet, AuthViewSet, CategoryViewSet, 
+    LeaderboardViewSet, QuestViewSet, ShopViewSet, InventoryViewSet, 
+    SkillXPViewSet, CommentViewSet, QuizRatingViewSet
+)
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -11,6 +15,12 @@ router.register(r'quizzes', QuizViewSet, basename='quiz')
 router.register(r'results', ResultViewSet, basename='result')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'leaderboard', LeaderboardViewSet, basename='leaderboard')
+router.register(r'quests', QuestViewSet, basename='quest')
+router.register(r'shop', ShopViewSet, basename='shop')
+router.register(r'inventory', InventoryViewSet, basename='inventory')
+router.register(r'skills', SkillXPViewSet, basename='skillxp')
+router.register(r'comments', CommentViewSet, basename='comment')
+router.register(r'ratings', QuizRatingViewSet, basename='rating')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -30,63 +30,82 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-slate-950">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(14,165,233,0.1),transparent_50%)]" />
-      
-      <Card className="w-full max-w-md relative">
-        <div className="text-center mb-8">
-          <div className="inline-flex p-3 rounded-2xl bg-primary-500/10 text-primary-500 mb-4">
-            <UserPlus className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">Create Account</h1>
-          <p className="text-slate-400 mt-2">Join LEXIQUIZ and start testing your skills</p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/theme.png')" }}>
+      {/* Light overlay for readability */}
+      <div className="absolute inset-0 bg-white/10" />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Username"
-            placeholder="johndoe"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <Input
-            label="Email"
-            type="email"
-            placeholder="john@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-              {error}
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center space-x-2 mb-4">
+            <div className="bg-[#6366f1] p-2 rounded-xl shadow-lg">
+              <UserPlus className="h-6 w-6 text-white" />
             </div>
-          )}
-
-          <Button type="submit" className="w-full" isLoading={loading}>
-            Sign Up
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-slate-400 text-sm">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary-500 hover:text-primary-400 font-medium">
-              Sign in
-            </Link>
-          </p>
+            <span className="text-2xl font-black text-[#1e293b] tracking-tight">
+              LEXIQUIZ
+            </span>
+          </div>
+          <h1 className="text-5xl font-black text-[#1e293b] mb-2 tracking-tight">Sign Up</h1>
+          <p className="text-[#64748b] font-bold">Join the fun and start your journey!</p>
         </div>
-      </Card>
+
+        <Card className="bg-white border-0 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-10">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Username</label>
+              <Input
+                placeholder="Your super nickname"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Email</label>
+              <Input
+                type="email"
+                placeholder="john@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Password</label>
+              <Input
+                type="password"
+                placeholder="Your secret code"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="p-4 rounded-2xl bg-rose-50 text-rose-600 text-sm font-bold border border-rose-100">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full h-14 rounded-2xl bg-[#6366f1] hover:bg-[#4f46e5] text-lg font-black shadow-xl shadow-indigo-500/20" isLoading={loading}>
+              Create Account
+            </Button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-slate-500 font-bold flex items-center justify-center space-x-2">
+              <span>Already have an account?</span>
+              <Link to="/login" className="text-primary-600 hover:text-primary-700 underline decoration-2 underline-offset-4">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };

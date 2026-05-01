@@ -14,6 +14,10 @@ import History from './pages/History';
 import CreateQuiz from './pages/CreateQuiz';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
+import Shop from './pages/Shop';
+import Skills from './pages/Skills';
+import LiveDuel from './pages/LiveDuel';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -38,6 +42,38 @@ function App() {
             element={
               <ProtectedRoute>
                 <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shop"
+            element={
+              <ProtectedRoute>
+                <Shop />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/skills"
+            element={
+              <ProtectedRoute>
+                <Skills />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/duel/:roomName"
+            element={
+              <ProtectedRoute>
+                <LiveDuel />
               </ProtectedRoute>
             }
           />

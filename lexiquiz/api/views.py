@@ -2,8 +2,30 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import Quiz, Question, Choice, Result, Category, Profile, UserAnswer
-from .serializers import QuizSerializer, QuizDetailSerializer, QuestionSerializer, ResultSerializer, UserSerializer, CategorySerializer, UserAnswerSerializer
+from django.db.models import Count, Avg, Q
+from .models import (
+    Quiz, Question, Choice, Result, Category, Profile, UserAnswer,
+    DailyQuest, UserQuest, Item, UserInventory, SkillXP,
+    QuizRating, Comment, Follow
+)
+from .serializers import (
+    QuizSerializer, QuizDetailSerializer, QuestionSerializer, 
+    ResultSerializer, UserSerializer, CategorySerializer, 
+    UserAnswerSerializer, DailyQuestSerializer, UserQuestSerializer,
+    ItemSerializer, UserInventorySerializer, SkillXPSerializer,
+    CommentSerializer, QuizRatingSerializer
+)
+from datetime import date, timedelta
+from django.utils import timezone
+import math
+
+def ensure_daily_quests(user):
+    today = date.today()
+    if not UserQuest.objects.filter(user=user, date=today).exists():
+        # Assign 3 random active quests
+        quests = DailyQuest.objects.filter(is_active=True).order_by('?')[:3]
+        for q in quests:
+            UserQuest.objects.create(user=user, quest=q, date=today)
 
 class AuthViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.AllowAny]
@@ -48,6 +70,18 @@ class AuthViewSet(viewsets.GenericViewSet):
             serializer = self.get_serializer(user)
             return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def follow(self, request, pk=None):
+        target_user = User.objects.get(pk=pk)
+        if target_user == request.user:
+            return Response({"error": "Cannot follow yourself"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        follow, created = Follow.objects.get_or_create(follower=request.user, following=target_user)
+        if not created:
+            follow.delete()
+            return Response({"message": "Unfollowed", "is_following": False})
+        return Response({"message": "Followed", "is_following": True})
+
     @action(detail=False, methods=['get'])
     def stats(self, request):
         if not request.user.is_authenticated:
@@ -87,11 +121,20 @@ class AuthViewSet(viewsets.GenericViewSet):
             b["earned"] = earned
             badges_data.append(b)
 
+        # Category Breakdown
+        category_stats = Result.objects.filter(user=user).values(
+            'quiz__category__name'
+        ).annotate(
+            count=Count('id'),
+            avg_accuracy=Avg('score') # This is just absolute score, but good enough for trend
+        ).order_by('-count')
+
         return Response({
             "quizzes_created": quizzes_created,
             "results_taken": results_taken,
             "avg_score": round(avg_score, 1),
-            "badges": badges_data
+            "badges": badges_data,
+            "category_stats": list(category_stats)
         })
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -207,12 +250,53 @@ class ResultViewSet(viewsets.ModelViewSet):
             result.score = correct_count
             result.save()
 
-            # Update XP (Ensure profile exists)
+            # --- GAMIFICATION LOGIC ---
             profile, created = Profile.objects.get_or_create(user=self.request.user)
+            
+            # 1. Award Coins: 10 per correct answer
+            earned_coins = correct_count * 10
+            profile.coins += earned_coins
+            
+            # 2. Award XP & Level Up
             profile.xp += correct_count * 10
-            import math
             profile.level = math.floor(math.sqrt(profile.xp / 100)) + 1
+            
+            # 3. Streak Logic
+            today = date.today()
+            if profile.last_active == today - timedelta(days=1):
+                profile.streak_count += 1
+            elif profile.last_active < today - timedelta(days=1):
+                profile.streak_count = 1
+            # If last_active is today, streak remains same
+            profile.last_active = today
             profile.save()
+
+            # 4. Skill Tree XP
+            if quiz.category:
+                skill_xp, _ = SkillXP.objects.get_or_create(user=self.request.user, category=quiz.category)
+                skill_xp.xp += correct_count * 10
+                skill_xp.level = math.floor(math.sqrt(skill_xp.xp / 100)) + 1
+                skill_xp.save()
+
+            # 5. Quest Progress
+            # Ensure user has daily quests
+            ensure_daily_quests(self.request.user)
+            
+            active_user_quests = UserQuest.objects.filter(user=self.request.user, is_completed=False, date=today)
+            for uq in active_user_quests:
+                quest = uq.quest
+                if quest.quest_type == 'QUIZ_COUNT':
+                    uq.progress += 1
+                elif quest.quest_type == 'XP_GAIN':
+                    uq.progress += (correct_count * 10)
+                elif quest.quest_type == 'SCORE_AVG':
+                    percentage = (correct_count / total_questions) * 100 if total_questions > 0 else 0
+                    if percentage >= quest.requirement_value:
+                        uq.progress = quest.requirement_value # Mark as done
+                
+                if uq.progress >= quest.requirement_value:
+                    uq.is_completed = True
+                uq.save()
 
             serializer = ResultSerializer(result)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -232,6 +316,106 @@ class LeaderboardViewSet(viewsets.ViewSet):
             data.append({
                 'username': p.user.username,
                 'xp': p.xp,
-                'level': p.level
+                'level': p.level,
+                'streak': p.streak_count
             })
         return Response(data)
+
+class QuestViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserQuestSerializer
+
+    def get_queryset(self):
+        # Ensure quests exist for today
+        ensure_daily_quests(self.request.user)
+        return UserQuest.objects.filter(user=self.request.user, date=date.today())
+
+    @action(detail=True, methods=['post'])
+    def claim(self, request, pk=None):
+        uq = self.get_object()
+        if uq.is_completed and not uq.is_claimed:
+            uq.is_claimed = True
+            uq.save()
+            
+            profile = request.user.profile
+            profile.coins += uq.quest.reward_coins
+            profile.xp += uq.quest.reward_xp
+            profile.level = math.floor(math.sqrt(profile.xp / 100)) + 1
+            profile.save()
+            
+            return Response({"message": "Rewards claimed!", "coins": profile.coins, "xp": profile.xp})
+        return Response({"error": "Cannot claim rewards"}, status=status.HTTP_400_BAD_REQUEST)
+
+class ShopViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=['post'])
+    def buy(self, request, pk=None):
+        item = self.get_object()
+        profile = request.user.profile
+        
+        if UserInventory.objects.filter(user=request.user, item=item).exists():
+            return Response({"error": "Already owned"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if profile.coins >= item.price:
+            profile.coins -= item.price
+            profile.save()
+            UserInventory.objects.create(user=request.user, item=item)
+            return Response({"message": "Purchase successful!", "coins": profile.coins})
+        return Response({"error": "Not enough coins"}, status=status.HTTP_400_BAD_REQUEST)
+
+class InventoryViewSet(viewsets.ModelViewSet):
+    serializer_class = UserInventorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return UserInventory.objects.filter(user=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def equip(self, request, pk=None):
+        inv_item = self.get_object()
+        # Unequip others of same type if needed? 
+        # For now just toggle
+        inv_item.is_equipped = not inv_item.is_equipped
+        inv_item.save()
+        return Response({"is_equipped": inv_item.is_equipped})
+
+class SkillXPViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = SkillXPSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SkillXP.objects.filter(user=self.request.user).order_by('-level', '-xp')
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        quiz_id = self.request.query_params.get('quiz_id')
+        if quiz_id:
+            return Comment.objects.filter(quiz_id=quiz_id).order_by('-created_at')
+        return Comment.objects.none()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class QuizRatingViewSet(viewsets.ModelViewSet):
+    serializer_class = QuizRatingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return QuizRating.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Update or create
+        user = self.request.user
+        quiz = serializer.validated_data['quiz']
+        rating = serializer.validated_data['rating']
+        
+        QuizRating.objects.update_or_create(
+            user=user, quiz=quiz,
+            defaults={'rating': rating}
+        )

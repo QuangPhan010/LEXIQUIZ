@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { LogIn, Sparkles } from 'lucide-react';
+import { LogIn, Sparkles, UserIcon } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -29,66 +29,84 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-mesh overflow-hidden relative">
-      {/* Playful Floating Elements */}
-      <div className="absolute top-10 left-10 h-20 w-20 bg-primary-100 rounded-full blur-3xl opacity-50 animate-pulse" />
-      <div className="absolute bottom-10 right-10 h-32 w-32 bg-accent-pink/10 rounded-full blur-3xl opacity-50" />
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/theme.png')" }}>
+      {/* Light overlay for readability without darkening the vibrant colors */}
+      <div className="absolute inset-0 bg-white/10" />
 
-      <div className="w-full max-w-md relative">
-        <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center space-x-2 mb-8 group">
-            <div className="bg-primary-600 p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-lg shadow-primary-500/20">
-              <Sparkles className="h-5 w-5 text-white" />
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center space-x-2 mb-4">
+            <div className="bg-[#6366f1] p-2 rounded-xl shadow-lg">
+              <Sparkles className="h-6 w-6 text-white" />
             </div>
-            <span className="text-2xl font-black text-slate-900 tracking-tight">
+            <span className="text-2xl font-black text-[#1e293b] tracking-tight">
               LEXIQUIZ
             </span>
-          </Link>
-          <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Welcome back!</h1>
-          <p className="text-slate-500 font-medium">Ready to continue your learning journey?</p>
+          </div>
+          <h1 className="text-5xl font-black text-[#1e293b] mb-2 tracking-tight">Welcome back!</h1>
+          <p className="text-[#64748b] font-bold">Ready to continue your learning journey?</p>
         </div>
 
-        <Card className="shadow-2xl shadow-primary-500/10 border-0">
+        <Card className="bg-white border-0 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-10">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Username"
-              placeholder="Your super nickname"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <div className="space-y-1">
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Your secret code"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <div className="flex justify-end">
-                <button type="button" className="text-sm font-bold text-primary-600 hover:text-primary-700">Forgot it?</button>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Username</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
+                  <UserIcon className="h-5 w-5" />
+                </div>
+                <Input
+                  placeholder="Your super nickname"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="pl-12 bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Password</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
+                  <LogIn className="h-5 w-5" />
+                </div>
+                <Input
+                  type="password"
+                  placeholder="Your secret code"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-12 bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
+                  required
+                />
+              </div>
+              <div className="flex justify-end pr-1">
+                <button type="button" className="text-xs font-bold text-primary-600 hover:text-primary-700">Forgot it?</button>
               </div>
             </div>
 
             {error && (
-              <div className="p-4 rounded-2xl bg-rose-50 text-rose-600 text-sm font-bold border border-rose-100 animate-in fade-in zoom-in-95 duration-300">
+              <div className="p-4 rounded-2xl bg-rose-50 text-rose-600 text-sm font-bold border border-rose-100">
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full py-4 text-lg" isLoading={loading}>
-              Let's Go!
-              <LogIn className="h-5 w-5 ml-2" />
+            <Button type="submit" className="w-full h-14 rounded-2xl bg-[#6366f1] hover:bg-[#4f46e5] text-lg font-black shadow-xl shadow-indigo-500/20" isLoading={loading}>
+              Let's Go! <span className="ml-1">→</span>
             </Button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-50 text-center">
-            <p className="text-slate-500 font-bold">
-              New here?{' '}
+          <div className="mt-8 text-center">
+            <p className="text-slate-500 font-bold flex items-center justify-center space-x-2">
+              <span>New here?</span>
               <Link to="/register" className="text-primary-600 hover:text-primary-700 underline decoration-2 underline-offset-4">
                 Join the fun!
               </Link>
+              <span className="text-amber-400">
+                <svg width="20" height="10" viewBox="0 0 20 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 8C5 2 8 2 11 8C14 14 17 2 18 2" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              </span>
             </p>
           </div>
         </Card>

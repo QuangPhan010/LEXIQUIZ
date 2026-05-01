@@ -15,6 +15,8 @@ interface QuizDetail {
   creator: number;
   is_public: boolean;
   category_name: string;
+  comments: any[];
+  avg_rating: number;
 }
 
 const QuizDetail: React.FC = () => {
@@ -25,6 +27,9 @@ const QuizDetail: React.FC = () => {
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [userRating, setUserRating] = useState(0);
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -73,6 +78,44 @@ const QuizDetail: React.FC = () => {
     }
   };
 
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmittingComment(true);
+    try {
+      const res = await api.post('/comments/', {
+        quiz: quiz?.id,
+        text: newComment
+      });
+      if (quiz) {
+        setQuiz({
+          ...quiz,
+          comments: [res.data, ...quiz.comments]
+        });
+      }
+      setNewComment('');
+    } catch (err) {
+      console.error('Failed to add comment', err);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleRate = async (rating: number) => {
+    setUserRating(rating);
+    try {
+      await api.post('/ratings/', {
+        quiz: quiz?.id,
+        rating: rating
+      });
+      // Refresh quiz to get new average
+      const res = await api.get(`/quizzes/${quiz?.id}/`);
+      setQuiz(res.data);
+    } catch (err) {
+      console.error('Failed to rate', err);
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="h-12 w-12 animate-spin border-4 border-primary-500 border-t-transparent rounded-full" />
@@ -102,6 +145,22 @@ const QuizDetail: React.FC = () => {
                 Adventure awaits
               </span>
               <h1 className="text-4xl font-black mb-6 text-slate-900 tracking-tight leading-tight">{quiz.title}</h1>
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="flex items-center text-accent-amber">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRate(star)}
+                      className="hover:scale-125 transition-transform"
+                    >
+                      <Sparkles className={`h-5 w-5 ${star <= (userRating || Math.round(quiz.avg_rating)) ? 'fill-accent-amber' : 'text-slate-200'}`} />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-slate-400 font-bold text-sm">{quiz.avg_rating} / 5</span>
+                </div>
+                <div className="h-4 w-px bg-slate-200" />
+                <span className="text-slate-400 font-bold text-sm uppercase tracking-widest">{quiz.category_name}</span>
+              </div>
               <p className="text-slate-500 text-xl font-medium leading-relaxed">{quiz.description || 'No description provided, but we know you can handle this! Get ready to test your knowledge.'}</p>
             </div>
             <div className="shrink-0">
@@ -209,6 +268,67 @@ const QuizDetail: React.FC = () => {
             </p>
           </div>
         )}
+
+        {/* Comments Section */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-black mb-10 text-slate-900 tracking-tight">Discussion</h2>
+          
+          {user && (
+            <Card className="mb-10 p-6 border-0 shadow-xl bg-slate-50">
+              <form onSubmit={handleAddComment} className="space-y-4">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Share your thoughts on this quiz..."
+                  className="w-full h-32 rounded-3xl p-6 bg-white border-0 shadow-inner focus:ring-4 focus:ring-primary-500/10 transition-all resize-none text-slate-700 font-medium"
+                />
+                <div className="flex justify-end">
+                  <Button 
+                    type="submit" 
+                    disabled={submittingComment || !newComment.trim()}
+                    className="rounded-2xl px-8 h-12 font-bold"
+                  >
+                    Post Comment
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          )}
+
+          <div className="space-y-6">
+            {quiz.comments && quiz.comments.length > 0 ? (
+              quiz.comments.map((comment) => (
+                <div key={comment.id} className="flex space-x-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="h-14 w-14 rounded-2xl bg-white shadow-lg overflow-hidden shrink-0">
+                    {comment.user_avatar ? (
+                      <img src={comment.user_avatar} alt={comment.username} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-slate-200 bg-slate-50">
+                        <Sparkles className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-black text-slate-900">{comment.username}</p>
+                        <p className="text-[10px] font-bold text-slate-300 uppercase">
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className="text-slate-600 font-medium leading-relaxed">{comment.text}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-20 bg-white/50 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200">
+                <HelpCircle className="h-12 w-12 text-slate-200 mx-auto mb-4" />
+                <p className="text-slate-400 font-bold">No comments yet. Be the first to start the discussion!</p>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );

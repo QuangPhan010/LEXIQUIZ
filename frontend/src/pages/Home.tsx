@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Navbar } from '../components/Navbar';
-import { Trophy, Clock, Play, Sparkles, Book, Tag, ChevronRight, Filter } from 'lucide-react';
+import { Trophy, Clock, Play, Sparkles, Book, Tag, ChevronRight, Filter, Sword } from 'lucide-react';
 
 interface Category {
   id: number;
@@ -28,6 +28,7 @@ const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,9 +73,29 @@ const Home: React.FC = () => {
           <h1 className="text-5xl font-black tracking-tight sm:text-6xl mb-6 bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent">
             Ready for a <span className="text-primary-600 underline decoration-accent-pink/30 decoration-8 underline-offset-4">Challenge?</span>
           </h1>
-          <p className="text-xl text-slate-500 leading-relaxed">
+          <p className="text-xl text-slate-500 leading-relaxed mb-10">
             Pick a topic, test your knowledge, and earn your bragging rights! 🚀
           </p>
+
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
+            <Link to="/create-quiz" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto rounded-2xl h-16 px-10 text-lg shadow-xl shadow-primary-500/10">
+                Create Quiz
+              </Button>
+            </Link>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full sm:w-auto rounded-2xl h-16 px-10 text-lg border-2 border-slate-100 hover:border-rose-500/20 hover:bg-rose-50/50 transition-all"
+              onClick={() => {
+                const room = prompt('Enter Room Name to Join or Create:');
+                if (room) navigate(`/duel/${room}`);
+              }}
+            >
+              <Sword className="h-5 w-5 mr-3 text-rose-500" />
+              Live Duel
+            </Button>
+          </div>
         </div>
 
         {/* Categories Bar */}

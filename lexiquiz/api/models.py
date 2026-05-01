@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -18,9 +19,12 @@ class Profile(models.Model):
     xp = models.IntegerField(default=0)
     level = models.IntegerField(default=1)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    last_active = models.DateField(default=timezone.now)
+    streak_count = models.IntegerField(default=0)
+    coins = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"{self.user.username} - Level {self.level}"
+        return f"{self.user.username} - Level {self.level} - Coins: {self.coins}"
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -89,3 +93,98 @@ class UserAnswer(models.Model):
 
     def __str__(self):
         return f"{self.result.user.username} - {self.question.text[:20]}"
+
+class DailyQuest(models.Model):
+    QUEST_TYPES = (
+        ('QUIZ_COUNT', 'Complete Quizzes'),
+        ('SCORE_AVG', 'Average Score'),
+        ('XP_GAIN', 'Earn XP'),
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    quest_type = models.CharField(max_length=20, choices=QUEST_TYPES)
+    requirement_value = models.IntegerField()
+    reward_coins = models.IntegerField(default=50)
+    reward_xp = models.IntegerField(default=100)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+class UserQuest(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quests')
+    quest = models.ForeignKey(DailyQuest, on_delete=models.CASCADE)
+    progress = models.IntegerField(default=0)
+    is_completed = models.BooleanField(default=False)
+    is_claimed = models.BooleanField(default=False)
+    date = models.DateField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.quest.title} - {self.is_completed}"
+
+class Item(models.Model):
+    ITEM_TYPES = (
+        ('FRAME', 'Avatar Frame'),
+        ('THEME', 'UI Theme'),
+        ('BADGE', 'Special Badge'),
+    )
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.IntegerField()
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPES)
+    image = models.ImageField(upload_to='items/', null=True, blank=True)
+    config = models.JSONField(null=True, blank=True) # For themes or special effects
+
+    def __str__(self):
+        return self.name
+
+class UserInventory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inventory')
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    is_equipped = models.BooleanField(default=False)
+    purchased_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.item.name}"
+
+    class Meta:
+        verbose_name_plural = "User Inventories"
+
+class SkillXP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='skill_xp')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    xp = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+
+    class Meta:
+        unique_together = ('user', 'category')
+        verbose_name_plural = "Skill XP"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.category.name} - Level {self.level}"
+
+class QuizRating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='ratings')
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'quiz')
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} on {self.quiz.title}"
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')

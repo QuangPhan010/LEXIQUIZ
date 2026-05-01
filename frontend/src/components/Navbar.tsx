@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/Button';
-import { LogOut, History, BookOpen, PlusCircle, User as UserIcon, Zap, Trophy } from 'lucide-react';
+import { LogOut, History, BookOpen, PlusCircle, User as UserIcon, Zap, Trophy, ShoppingBag, Brain, Layout } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -35,10 +35,22 @@ export const Navbar: React.FC = () => {
                     Create
                   </Button>
                 </Link>
+                <Link to="/dashboard" className="hidden sm:block">
+                  <Button variant="ghost" size="sm">
+                    <Layout className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
                 <Link to="/leaderboard" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <Trophy className="h-4 w-4 mr-2" />
                     Leaderboard
+                  </Button>
+                </Link>
+                <Link to="/shop" className="hidden sm:block">
+                  <Button variant="ghost" size="sm">
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    Shop
                   </Button>
                 </Link>
                 <Link to="/history" className="hidden sm:block">

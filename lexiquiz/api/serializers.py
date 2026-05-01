@@ -1,16 +1,22 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Quiz, Question, Choice, Result, Category, Profile, UserAnswer
+from .models import (
+    Quiz, Question, Choice, Result, Category, Profile, UserAnswer,
+    DailyQuest, UserQuest, Item, UserInventory, SkillXP,
+    QuizRating, Comment, Follow
+)
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     xp = serializers.ReadOnlyField(source='profile.xp')
     level = serializers.ReadOnlyField(source='profile.level')
+    streak_count = serializers.ReadOnlyField(source='profile.streak_count')
+    coins = serializers.ReadOnlyField(source='profile.coins')
     avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar')
+        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'coins')
 
     def get_avatar(self, obj):
         if obj.profile.avatar:
@@ -77,14 +83,25 @@ class QuizSerializer(serializers.ModelSerializer):
 class QuizDetailSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     category_name = serializers.ReadOnlyField(source='category.name')
+    comments = serializers.SerializerMethodField()
+    avg_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Quiz
         fields = (
             'id', 'title', 'description', 'created_at', 'creator', 
             'questions', 'category', 'category_name', 'is_public', 
-            'time_limit', 'tags'
+            'time_limit', 'tags', 'comments', 'avg_rating'
         )
+
+    def get_comments(self, obj):
+        comments = obj.comments.all().order_by('-created_at')[:20]
+        return CommentSerializer(comments, many=True, context=self.context).data
+
+    def get_avg_rating(self, obj):
+        from django.db.models import Avg
+        avg = obj.ratings.aggregate(Avg('rating'))['rating__avg']
+        return round(avg, 1) if avg else 0
 
 class UserAnswerSerializer(serializers.ModelSerializer):
     question_text = serializers.ReadOnlyField(source='question.text')
@@ -115,3 +132,52 @@ class ResultSerializer(serializers.ModelSerializer):
         model = Result
         fields = ('id', 'user', 'quiz', 'quiz_title', 'score', 'total_questions', 'duration', 'completed_at', 'answers')
         read_only_fields = ('user', 'completed_at')
+
+class DailyQuestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DailyQuest
+        fields = '__all__'
+
+class UserQuestSerializer(serializers.ModelSerializer):
+    quest = DailyQuestSerializer(read_only=True)
+    class Meta:
+        model = UserQuest
+        fields = '__all__'
+
+class ItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = '__all__'
+
+class UserInventorySerializer(serializers.ModelSerializer):
+    item = ItemSerializer(read_only=True)
+    class Meta:
+        model = UserInventory
+        fields = '__all__'
+
+class SkillXPSerializer(serializers.ModelSerializer):
+    category_name = serializers.ReadOnlyField(source='category.name')
+    class Meta:
+        model = SkillXP
+        fields = '__all__'
+
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source='user.username')
+    user_avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'user', 'username', 'user_avatar', 'text', 'created_at')
+
+    def get_user_avatar(self, obj):
+        if obj.user.profile.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.user.profile.avatar.url)
+            return obj.user.profile.avatar.url
+        return None
+
+class QuizRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizRating
+        fields = ('id', 'user', 'quiz', 'rating')
