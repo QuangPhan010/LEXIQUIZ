@@ -12,6 +12,7 @@ import TakeQuiz from './pages/TakeQuiz';
 import Result from './pages/Result';
 import History from './pages/History';
 import CreateQuiz from './pages/CreateQuiz';
+import Leaderboard from './pages/Leaderboard';
 
 function App() {
   return (
@@ -28,6 +29,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
               </ProtectedRoute>
             }
           />

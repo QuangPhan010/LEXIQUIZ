@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Navbar } from '../components/Navbar';
-import { Plus, Trash2, CheckCircle2, Circle, Save, FileText, HelpCircle } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, Save, FileText, HelpCircle, Layout, Clock, Globe, Lock, Hash } from 'lucide-react';
 
 interface Choice {
   text: string;
@@ -15,14 +15,28 @@ interface Choice {
 interface Question {
   text: string;
   choices: Choice[];
+  question_type: 'MCQ' | 'TF';
+}
+
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
 }
 
 const CreateQuiz: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
+  const [timeLimit, setTimeLimit] = useState('0');
+  const [tags, setTags] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  
   const [questions, setQuestions] = useState<Question[]>([
     {
       text: '',
+      question_type: 'MCQ',
       choices: [
         { text: '', is_correct: true },
         { text: '', is_correct: false },
@@ -34,11 +48,24 @@ const CreateQuiz: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories/');
+        setCategories(response.data);
+      } catch (err) {
+        console.error('Failed to fetch categories', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const handleAddQuestion = () => {
     setQuestions([
       ...questions,
       {
         text: '',
+        question_type: 'MCQ',
         choices: [
           { text: '', is_correct: true },
           { text: '', is_correct: false },
@@ -81,9 +108,14 @@ const CreateQuiz: React.FC = () => {
       await api.post('/quizzes/', {
         title,
         description,
+        category: category || null,
+        is_public: isPublic,
+        time_limit: parseInt(timeLimit) || 0,
+        tags,
         questions: questions.map((q, index) => ({
           text: q.text,
           order: index,
+          question_type: q.question_type,
           choices: q.choices
         })),
       });
@@ -136,6 +168,75 @@ const CreateQuiz: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="border-t-4 border-t-accent-violet">
+            <div className="flex items-center space-x-2 mb-6">
+              <Layout className="h-5 w-5 text-accent-violet" />
+              <h2 className="text-xl font-black text-slate-800">Settings & Organization</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-slate-700 ml-1">Category</label>
+                <select 
+                  className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 text-slate-900 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all duration-300"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-slate-700 ml-1 flex items-center">
+                  <Clock className="h-4 w-4 mr-1 text-slate-400" />
+                  Time Limit (seconds)
+                </label>
+                <Input
+                  type="number"
+                  placeholder="0 for no limit"
+                  value={timeLimit}
+                  onChange={(e) => setTimeLimit(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-slate-700 ml-1 flex items-center">
+                  <Hash className="h-4 w-4 mr-1 text-slate-400" />
+                  Tags
+                </label>
+                <Input
+                  placeholder="history, logic, science..."
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-slate-700 ml-1">Visibility</label>
+                <div className="flex items-center space-x-4 p-2 bg-slate-50 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setIsPublic(true)}
+                    className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-xl transition-all ${isPublic ? 'bg-white shadow-sm text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    <Globe className="h-4 w-4" />
+                    <span className="text-sm font-bold">Public</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPublic(false)}
+                    className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-xl transition-all ${!isPublic ? 'bg-white shadow-sm text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    <Lock className="h-4 w-4" />
+                    <span className="text-sm font-bold">Private</span>
+                  </button>
+                </div>
               </div>
             </div>
           </Card>

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Navbar } from '../components/Navbar';
-import { History as HistoryIcon, ArrowRight, Calendar, Award, Trophy } from 'lucide-react';
+import { History as HistoryIcon, ArrowRight, Calendar, Award, Trophy, TrendingUp, Target, Zap } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 interface ResultRecord {
   id: number;
@@ -21,6 +22,10 @@ const History: React.FC = () => {
     const fetchHistory = async () => {
       try {
         const response = await api.get('/history/');
+        // Sort history by date for the chart (ascending)
+        const sortedHistory = [...response.data].sort((a, b) => 
+          new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
+        );
         setHistory(response.data);
       } catch (err) {
         console.error('Failed to fetch history', err);
@@ -31,6 +36,18 @@ const History: React.FC = () => {
     fetchHistory();
   }, []);
 
+  const chartData = [...history].reverse().map(record => ({
+    name: new Date(record.completed_at).toLocaleDateString(),
+    score: Math.round((record.score / record.total_questions) * 100),
+    title: record.quiz_title
+  })).slice(-10); // Last 10 attempts
+
+  const averageScore = history.length > 0 
+    ? Math.round(history.reduce((acc, curr) => acc + (curr.score / curr.total_questions), 0) / history.length * 100) 
+    : 0;
+  
+  const totalXP = history.reduce((acc, curr) => acc + curr.score * 10, 0);
+
   return (
     <div className="min-h-screen bg-mesh text-slate-900">
       <Navbar />
@@ -40,8 +57,99 @@ const History: React.FC = () => {
           <div className="bg-primary-600 p-3.5 rounded-2xl shadow-lg shadow-primary-500/20">
             <HistoryIcon className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-4xl font-black tracking-tight">Your Progress</h1>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900">Your Progress</h1>
         </div>
+
+        {!loading && history.length > 0 && (
+          <div className="space-y-8 mb-12">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="bg-white border-t-4 border-t-primary-500">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-primary-50 text-primary-500 rounded-2xl">
+                    <Target className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Avg. Accuracy</p>
+                    <p className="text-3xl font-black text-slate-900">{averageScore}%</p>
+                  </div>
+                </div>
+              </Card>
+              <Card className="bg-white border-t-4 border-t-accent-amber">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-accent-amber/10 text-accent-amber rounded-2xl">
+                    <Zap className="h-6 w-6 fill-accent-amber" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Total XP</p>
+                    <p className="text-3xl font-black text-slate-900">{totalXP}</p>
+                  </div>
+                </div>
+              </Card>
+              <Card className="bg-white border-t-4 border-t-accent-emerald">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-accent-emerald/10 text-accent-emerald rounded-2xl">
+                    <Trophy className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Completed</p>
+                    <p className="text-3xl font-black text-slate-900">{history.length}</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Chart */}
+            <Card className="p-8 border-0 shadow-xl overflow-hidden">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-primary-500" />
+                  <h2 className="text-xl font-black text-slate-800">Accuracy Trend</h2>
+                </div>
+                <span className="text-xs font-bold text-slate-400">Last 10 attempts</span>
+              </div>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }}
+                      dy={10}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 700 }}
+                      domain={[0, 100]}
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                      itemStyle={{ fontWeight: 800, color: '#6366f1' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="#6366f1" 
+                      strokeWidth={4}
+                      fillOpacity={1} 
+                      fill="url(#colorScore)" 
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-6">
@@ -60,6 +168,9 @@ const History: React.FC = () => {
           </Card>
         ) : (
           <div className="space-y-6">
+            <div className="flex items-center justify-between px-2 mb-4">
+              <h2 className="text-2xl font-black text-slate-800">Attempt History</h2>
+            </div>
             {history.map((record) => {
               const percentage = (record.score / record.total_questions) * 100;
               const isPassed = percentage >= 50;

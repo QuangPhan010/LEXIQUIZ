@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/Button';
-import { LogOut, History, BookOpen, PlusCircle, User as UserIcon } from 'lucide-react';
+import { LogOut, History, BookOpen, PlusCircle, User as UserIcon, Zap, Trophy } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -35,6 +35,12 @@ export const Navbar: React.FC = () => {
                     Create
                   </Button>
                 </Link>
+                <Link to="/leaderboard" className="hidden sm:block">
+                  <Button variant="ghost" size="sm">
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Leaderboard
+                  </Button>
+                </Link>
                 <Link to="/history" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <History className="h-4 w-4 mr-2" />
@@ -43,11 +49,15 @@ export const Navbar: React.FC = () => {
                 </Link>
                 <div className="flex items-center space-x-2 pl-4 border-l border-slate-100">
                   <div className="hidden md:block text-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Learner</p>
-                    <p className="text-sm font-bold text-slate-900">Explorer</p>
+                    <div className="flex items-center justify-end space-x-1">
+                      <Zap className="h-3 w-3 text-accent-amber fill-accent-amber" />
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.xp} XP</p>
+                    </div>
+                    <p className="text-sm font-black text-slate-900">Level {user.level || 1}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-2xl bg-primary-100 flex items-center justify-center text-primary-600">
+                  <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-primary-500/10 to-accent-violet/10 flex items-center justify-center text-primary-600 relative overflow-hidden group/avatar">
                     <UserIcon className="h-5 w-5" />
+                    <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover/avatar:opacity-10 transition-opacity" />
                   </div>
                   <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-400 hover:text-rose-500">
                     <LogOut className="h-5 w-5" />
