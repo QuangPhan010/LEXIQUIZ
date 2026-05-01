@@ -4,7 +4,7 @@ import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Navbar } from '../components/Navbar';
-import { Trophy, RefreshCw, Home, History, Star, PartyPopper, Clock, Zap } from 'lucide-react';
+import { Trophy, RefreshCw, Home, History, Star, PartyPopper, Clock, Zap, HelpCircle, CheckCircle2, XCircle, Circle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Result: React.FC = () => {
@@ -140,9 +140,9 @@ const Result: React.FC = () => {
                       isCorrect ? 'border-accent-emerald/20 bg-accent-emerald/5' : 'border-primary-100 bg-white shadow-sm'
                     }`}>
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <span className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-black ${
-                            isCorrect ? 'bg-accent-emerald text-white' : 'bg-primary-500 text-white'
+                        <div className="flex items-start space-x-3">
+                          <span className={`h-8 w-8 shrink-0 mt-0.5 rounded-xl flex items-center justify-center text-xs font-black ${
+                            isCorrect ? 'bg-accent-emerald text-white' : 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
                           }`}>
                             {index + 1}
                           </span>
@@ -154,26 +154,25 @@ const Result: React.FC = () => {
                             <span>Correct</span>
                           </div>
                         ) : (
-                          <div className="flex items-center space-x-1 text-primary-500 text-xs font-black uppercase tracking-widest bg-primary-50 px-3 py-1 rounded-full">
-                            <Circle className="h-3 w-3" />
+                          <div className="flex items-center space-x-1 text-rose-500 text-xs font-black uppercase tracking-widest bg-rose-50 px-3 py-1 rounded-full">
+                            <XCircle className="h-3 w-3" />
                             <span>Incorrect</span>
                           </div>
                         )}
                       </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Your Answer</p>
-                          <div className={`p-3 rounded-2xl border ${
-                            isCorrect ? 'border-accent-emerald/30 bg-white text-accent-emerald font-bold' : 'border-primary-200 bg-primary-50 text-primary-600 font-bold'
+                                           <div className="space-y-4">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Your Answer</p>
+                          <div className={`p-4 rounded-2xl border-2 font-bold ${
+                            isCorrect ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-rose-50 border-rose-100 text-rose-600'
                           }`}>
-                            {answer.selected_choice_text || 'No Answer'}
+                            {answer.selected_choice_text || 'No answer'}
                           </div>
                         </div>
                         {!isCorrect && (
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Correct Answer</p>
-                            <div className="p-3 rounded-2xl border border-accent-emerald bg-white text-accent-emerald font-bold">
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correct Answer</p>
+                            <div className="p-4 rounded-2xl border-2 border-accent-emerald bg-accent-emerald/5 text-accent-emerald font-bold">
                               {answer.correct_choice_text}
                             </div>
                           </div>

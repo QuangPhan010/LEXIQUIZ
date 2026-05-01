@@ -29,6 +29,8 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
 
+from .utils import extract_text_from_pdf, extract_text_from_docx, generate_quiz_from_text
+
 class QuizViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Public quizzes or quizzes created by the user
@@ -45,6 +47,30 @@ class QuizViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
+    @action(detail=False, methods=['post'])
+    def generate_from_file(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if file.name.endswith('.pdf'):
+                text = extract_text_from_pdf(file)
+            elif file.name.endswith('.docx'):
+                text = extract_text_from_docx(file)
+            else:
+                return Response({"error": "Unsupported file format"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not text.strip():
+                return Response({"error": "No text could be extracted from the file"}, status=status.HTTP_400_BAD_REQUEST)
+
+            quiz_data = generate_quiz_from_text(text)
+            return Response(quiz_data)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ResultViewSet(viewsets.ModelViewSet):
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -54,59 +80,71 @@ class ResultViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def submit(self, request):
+        print(f"DEBUG: Submit received data: {request.data}")
         quiz_id = request.data.get('quiz_id')
-        answers_data = request.data.get('answers') # Dict of {question_id: choice_id}
+        answers_data = request.data.get('answers', {}) # Dict of {question_id: choice_id}
         duration = request.data.get('duration', 0)
 
         try:
-            quiz = Quiz.objects.get(id=quiz_id)
-        except Quiz.DoesNotExist:
-            return Response({"error": "Quiz not found"}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                quiz = Quiz.objects.get(id=quiz_id)
+            except Quiz.DoesNotExist:
+                return Response({"error": "Quiz not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        questions = quiz.questions.all()
-        total_questions = questions.count()
-        correct_count = 0
+            questions = quiz.questions.all()
+            total_questions = questions.count()
+            correct_count = 0
 
-        # Create Result first
-        result = Result.objects.create(
-            user=self.request.user,
-            quiz=quiz,
-            score=0, # Will update after checking
-            total_questions=total_questions,
-            duration=duration
-        )
-
-        for q in questions:
-            user_choice_id = answers_data.get(str(q.id))
-            choice = None
-            if user_choice_id:
-                try:
-                    choice = Choice.objects.get(id=user_choice_id, question=q)
-                    if choice.is_correct:
-                        correct_count += 1
-                except Choice.DoesNotExist:
-                    pass
-            
-            # Save UserAnswer
-            UserAnswer.objects.create(
-                result=result,
-                question=q,
-                selected_choice=choice
+            # Create Result first
+            result = Result.objects.create(
+                user=self.request.user,
+                quiz=quiz,
+                score=0, # Will update after checking
+                total_questions=total_questions,
+                duration=duration
             )
 
-        # Update Result score
-        result.score = correct_count
-        result.save()
+            if not isinstance(answers_data, dict):
+                print(f"DEBUG: answers_data is not a dict: {type(answers_data)}")
+                answers_data = {}
 
-        # Update XP
-        profile = self.request.user.profile
-        profile.xp += correct_count * 10
-        # Simple level up logic: level = floor(sqrt(xp/100)) + 1
-        import math
-        profile.level = math.floor(math.sqrt(profile.xp / 100)) + 1
-        profile.save()
+            for q in questions:
+                user_choice_id = answers_data.get(str(q.id))
+                choice = None
+                if user_choice_id:
+                    try:
+                        choice = Choice.objects.get(id=user_choice_id, question=q)
+                        if choice.is_correct:
+                            correct_count += 1
+                    except (Choice.DoesNotExist, ValueError, TypeError):
+                        print(f"DEBUG: Choice not found or invalid ID: {user_choice_id} for question {q.id}")
+                        pass
+                
+                # Save UserAnswer
+                UserAnswer.objects.create(
+                    result=result,
+                    question=q,
+                    selected_choice=choice
+                )
 
-        return Response(ResultSerializer(result).data, status=status.HTTP_201_CREATED)
+            # Update Result score
+            result.score = correct_count
+            result.save()
+
+            # Update XP (Ensure profile exists)
+            profile, created = Profile.objects.get_or_create(user=self.request.user)
+            profile.xp += correct_count * 10
+            import math
+            profile.level = math.floor(math.sqrt(profile.xp / 100)) + 1
+            profile.save()
+
+            serializer = ResultSerializer(result)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"DEBUG: Submit error: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LeaderboardViewSet(viewsets.ViewSet):
     permission_classes = [permissions.AllowAny]

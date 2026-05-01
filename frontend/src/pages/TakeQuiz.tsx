@@ -113,6 +113,19 @@ const TakeQuiz: React.FC = () => {
     </div>
   );
 
+  if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <Card className="max-w-md w-full text-center p-10">
+          <HelpCircle className="h-16 w-16 text-slate-300 mx-auto mb-6" />
+          <h2 className="text-2xl font-black text-slate-900 mb-4">No Questions Found</h2>
+          <p className="text-slate-500 mb-8">This quiz seems to have no questions. Please try another one.</p>
+          <Button onClick={() => navigate('/')}>Go Back Home</Button>
+        </Card>
+      </div>
+    );
+  }
+
   const currentQuestion = quiz.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
 

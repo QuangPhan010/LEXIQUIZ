@@ -5,7 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Navbar } from '../components/Navbar';
-import { Plus, Trash2, CheckCircle2, Circle, Save, FileText, HelpCircle, Layout, Clock, Globe, Lock, Hash } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, Save, FileText, HelpCircle, Layout, Clock, Globe, Lock, Hash, Zap } from 'lucide-react';
 
 interface Choice {
   text: string;
@@ -46,7 +46,9 @@ const CreateQuiz: React.FC = () => {
     },
   ]);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const navigate = useNavigate();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -59,6 +61,39 @@ const CreateQuiz: React.FC = () => {
     };
     fetchCategories();
   }, []);
+
+  const handleAIImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAiLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post('/quizzes/generate_from_file/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      const data = response.data;
+      setTitle(data.title || '');
+      setQuestions(data.questions.map((q: any) => ({
+        text: q.text,
+        question_type: q.question_type || 'MCQ',
+        choices: q.choices.map((c: any) => ({
+          text: c.text,
+          is_correct: c.is_correct
+        }))
+      })));
+      alert('Quiz generated successfully by AI!');
+    } catch (err: any) {
+      console.error('AI Import failed', err);
+      alert(err.response?.data?.error || 'Failed to generate quiz with AI. Please check your API Key.');
+    } finally {
+      setAiLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleAddQuestion = () => {
     setQuestions([
@@ -103,6 +138,7 @@ const CreateQuiz: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title) return alert('Please enter a title');
     setLoading(true);
     try {
       await api.post('/quizzes/', {
@@ -133,17 +169,36 @@ const CreateQuiz: React.FC = () => {
       <Navbar />
       
       <main className="max-w-4xl mx-auto px-4 pt-32 pb-12">
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
           <div className="flex items-center space-x-3">
             <div className="bg-primary-600 p-3 rounded-2xl shadow-lg shadow-primary-500/20">
               <Plus className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-4xl font-black tracking-tight text-slate-900">Create New Quiz</h1>
           </div>
-          <Button onClick={handleSubmit} isLoading={loading} className="px-10 py-4 shadow-xl">
-            <Save className="h-5 w-5 mr-2" />
-            Save Quiz
-          </Button>
+          
+          <div className="flex items-center space-x-3">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".pdf,.docx" 
+              onChange={handleAIImport} 
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()} 
+              isLoading={aiLoading}
+              className="border-dashed border-2 hover:bg-accent-violet/5 hover:border-accent-violet hover:text-accent-violet transition-all"
+            >
+              <Zap className={`h-5 w-5 mr-2 ${aiLoading ? 'animate-pulse' : 'text-accent-amber fill-accent-amber'}`} />
+              AI Import
+            </Button>
+            <Button onClick={handleSubmit} isLoading={loading} className="px-10 py-4 shadow-xl">
+              <Save className="h-5 w-5 mr-2" />
+              Save Quiz
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-8">

@@ -79,13 +79,16 @@ class QuizDetailSerializer(serializers.ModelSerializer):
 
 class UserAnswerSerializer(serializers.ModelSerializer):
     question_text = serializers.ReadOnlyField(source='question.text')
-    selected_choice_text = serializers.ReadOnlyField(source='selected_choice.text')
+    selected_choice_text = serializers.SerializerMethodField()
     correct_choice_id = serializers.SerializerMethodField()
     correct_choice_text = serializers.SerializerMethodField()
 
     class Meta:
         model = UserAnswer
         fields = ('id', 'question', 'question_text', 'selected_choice', 'selected_choice_text', 'correct_choice_id', 'correct_choice_text')
+
+    def get_selected_choice_text(self, obj):
+        return obj.selected_choice.text if obj.selected_choice else None
 
     def get_correct_choice_id(self, obj):
         correct_choice = obj.question.choices.filter(is_correct=True).first()

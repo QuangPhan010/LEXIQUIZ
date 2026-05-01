@@ -164,3 +164,6 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True # For development
+
+# AI Configuration
+GEMINI_API_KEY = 'AIzaSyAMg_VTOHyexFbK5rJFW_uqHZRwGpOVitg' # Add your Google Gemini API Key here

@@ -4,13 +4,17 @@ import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Navbar } from '../components/Navbar';
-import { ChevronLeft, Info, HelpCircle, BarChart, Sparkles } from 'lucide-react';
+import { ChevronLeft, Info, HelpCircle, BarChart, Sparkles, Trash2, Lock, Globe, Settings } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface QuizDetail {
   id: number;
   title: string;
   description: string;
   questions: any[];
+  creator: number;
+  is_public: boolean;
+  category_name: string;
 }
 
 const QuizDetail: React.FC = () => {
@@ -18,6 +22,9 @@ const QuizDetail: React.FC = () => {
   const [quiz, setQuiz] = useState<QuizDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -33,6 +40,38 @@ const QuizDetail: React.FC = () => {
     };
     fetchQuiz();
   }, [id, navigate]);
+
+  const handleToggleStatus = async () => {
+    if (!quiz) return;
+    setIsUpdating(true);
+    try {
+      const response = await api.patch(`/quizzes/${quiz.id}/`, {
+        is_public: !quiz.is_public
+      });
+      setQuiz({ ...quiz, is_public: response.data.is_public });
+    } catch (err) {
+      console.error('Failed to update quiz status', err);
+      alert('Failed to update status. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!quiz) return;
+    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) return;
+    
+    setIsDeleting(true);
+    try {
+      await api.delete(`/quizzes/${quiz.id}/`);
+      navigate('/');
+    } catch (err) {
+      console.error('Failed to delete quiz', err);
+      alert('Failed to delete quiz. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -66,11 +105,13 @@ const QuizDetail: React.FC = () => {
               <p className="text-slate-500 text-xl font-medium leading-relaxed">{quiz.description || 'No description provided, but we know you can handle this! Get ready to test your knowledge.'}</p>
             </div>
             <div className="shrink-0">
-              <Link to={`/take/${quiz.id}`}>
-                <Button size="lg" className="w-full md:w-auto px-12 py-6 text-xl rounded-3xl shadow-2xl">
-                  Start Quiz
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                onClick={() => navigate(`/take/${quiz.id}`)}
+                className="w-full md:w-auto px-12 py-6 text-xl rounded-3xl shadow-2xl"
+              >
+                Start Quiz
+              </Button>
             </div>
           </div>
         </Card>
@@ -125,6 +166,49 @@ const QuizDetail: React.FC = () => {
             </div>
           </div>
         </div>
+        {/* Creator Controls */}
+        {user && quiz.creator === user.id && (
+          <div className="mt-12 bg-white rounded-3xl p-10 border-2 border-dashed border-slate-200">
+            <h2 className="text-2xl font-black mb-8 flex items-center text-slate-900">
+              <Settings className="h-6 w-6 mr-3 text-primary-500" />
+              Creator Controls
+            </h2>
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                variant="outline" 
+                onClick={handleToggleStatus} 
+                isLoading={isUpdating}
+                className="flex-1 md:flex-none"
+              >
+                {quiz.is_public ? (
+                  <>
+                    <Lock className="h-5 w-5 mr-2" />
+                    Make Private
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-5 w-5 mr-2" />
+                    Make Public
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="danger" 
+                onClick={handleDelete} 
+                isLoading={isDeleting}
+                className="flex-1 md:flex-none"
+              >
+                <Trash2 className="h-5 w-5 mr-2" />
+                Delete Quiz
+              </Button>
+            </div>
+            <p className="mt-6 text-sm text-slate-400 font-medium italic">
+              {quiz.is_public 
+                ? "This quiz is currently public and visible to everyone." 
+                : "This quiz is currently private and only you can see it."}
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
