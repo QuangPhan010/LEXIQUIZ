@@ -33,7 +33,8 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 class Quiz(models.Model):
     title = models.CharField(max_length=255)
@@ -106,6 +107,7 @@ class DailyQuest(models.Model):
     requirement_value = models.IntegerField()
     reward_coins = models.IntegerField(default=50)
     reward_xp = models.IntegerField(default=100)
+    category = models.CharField(max_length=50, default='General')
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

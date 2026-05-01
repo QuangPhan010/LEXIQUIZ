@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/Button';
-import { LogOut, History, BookOpen, PlusCircle, User as UserIcon, Zap, Trophy, ShoppingBag, Brain, Layout } from 'lucide-react';
+import { LogOut, History, BookOpen, PlusCircle, User as UserIcon, Zap, Trophy, ShoppingBag, Brain, Layout, Flame, Target } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -41,6 +41,12 @@ export const Navbar: React.FC = () => {
                     Dashboard
                   </Button>
                 </Link>
+                <Link to="/quests" className="hidden sm:block">
+                  <Button variant="ghost" size="sm">
+                    <Target className="h-4 w-4 mr-2" />
+                    Quests
+                  </Button>
+                </Link>
                 <Link to="/leaderboard" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <Trophy className="h-4 w-4 mr-2" />
@@ -62,10 +68,12 @@ export const Navbar: React.FC = () => {
                   <Link to="/profile" className="flex items-center space-x-2 pl-4 border-l border-slate-100">
                     <div className="hidden md:block text-right">
                       <div className="flex items-center justify-end space-x-1">
-                        <Zap className="h-3 w-3 text-accent-amber fill-accent-amber" />
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.xp} XP</p>
+                        <Flame className={`h-3 w-3 ${user.is_streak_active ? 'text-orange-500 fill-orange-500' : 'text-slate-300 fill-slate-300'}`} />
+                        <p className={`text-[10px] font-bold uppercase tracking-widest ${user.is_streak_active ? 'text-orange-600' : 'text-slate-400'}`}>
+                          {user.streak_count || 0} Streak
+                        </p>
                       </div>
-                      <p className="text-sm font-black text-slate-900">Level {user.level || 1}</p>
+                      <p className="text-sm font-black text-slate-900">Level {user.level || 1} • {user.xp} XP</p>
                     </div>
                     <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-primary-500/10 to-accent-violet/10 flex items-center justify-center text-primary-600 relative overflow-hidden group/avatar">
                       {user.avatar ? (

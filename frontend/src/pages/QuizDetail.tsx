@@ -135,7 +135,7 @@ const QuizDetail: React.FC = () => {
         </Link>
 
         <Card className="mb-10 relative overflow-hidden border-t-8 border-t-primary-600">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
+          <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
             <Sparkles className="h-32 w-32" />
           </div>
           

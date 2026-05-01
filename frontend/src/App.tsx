@@ -13,6 +13,7 @@ import Result from './pages/Result';
 import History from './pages/History';
 import CreateQuiz from './pages/CreateQuiz';
 import Leaderboard from './pages/Leaderboard';
+import Quests from './pages/Quests';
 import Profile from './pages/Profile';
 import Shop from './pages/Shop';
 import Skills from './pages/Skills';
@@ -66,6 +67,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quests"
+            element={
+              <ProtectedRoute>
+                <Quests />
               </ProtectedRoute>
             }
           />

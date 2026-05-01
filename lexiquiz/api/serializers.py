@@ -13,18 +13,27 @@ class UserSerializer(serializers.ModelSerializer):
     streak_count = serializers.ReadOnlyField(source='profile.streak_count')
     coins = serializers.ReadOnlyField(source='profile.coins')
     avatar = serializers.SerializerMethodField()
+    is_streak_active = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'coins')
+        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'coins', 'is_streak_active')
 
     def get_avatar(self, obj):
-        if obj.profile.avatar:
+        profile = getattr(obj, 'profile', None)
+        if profile and profile.avatar:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.profile.avatar.url)
-            return obj.profile.avatar.url
+                return request.build_absolute_uri(profile.avatar.url)
+            return profile.avatar.url
         return None
+
+    def get_is_streak_active(self, obj):
+        profile = getattr(obj, 'profile', None)
+        if not profile:
+            return False
+        from django.utils import timezone
+        return profile.last_active == timezone.now().date()
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -136,7 +145,7 @@ class ResultSerializer(serializers.ModelSerializer):
 class DailyQuestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DailyQuest
-        fields = '__all__'
+        fields = ('id', 'title', 'description', 'quest_type', 'requirement_value', 'reward_coins', 'reward_xp', 'category', 'is_active')
 
 class UserQuestSerializer(serializers.ModelSerializer):
     quest = DailyQuestSerializer(read_only=True)

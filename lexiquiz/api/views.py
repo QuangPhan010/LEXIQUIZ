@@ -263,7 +263,9 @@ class ResultViewSet(viewsets.ModelViewSet):
             
             # 3. Streak Logic
             today = date.today()
-            if profile.last_active == today - timedelta(days=1):
+            if profile.streak_count == 0:
+                profile.streak_count = 1
+            elif profile.last_active == today - timedelta(days=1):
                 profile.streak_count += 1
             elif profile.last_active < today - timedelta(days=1):
                 profile.streak_count = 1
