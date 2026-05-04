@@ -18,11 +18,18 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    // Shuffle items initially if they haven't been reordered yet
+    // Shuffle items initially
     if (items.length === 0) {
       setItems([...choices].sort(() => Math.random() - 0.5));
     }
-  }, [choices]);
+  }, [choices, items.length]);
+
+  // Automatically report answer whenever items change
+  useEffect(() => {
+    if (items.length > 0 && !disabled) {
+      onAnswer(items.map(item => item.id));
+    }
+  }, [items, onAnswer, disabled]);
 
   const moveItem = (fromIndex: number, toIndex: number) => {
     if (disabled) return;
@@ -36,7 +43,6 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
     if (disabled) return;
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
-    // Add a ghost image or styling if needed
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '0.4';
     }
@@ -55,11 +61,6 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
     
     moveItem(draggedIndex, index);
     setDraggedIndex(index);
-  };
-
-  const handleSubmit = () => {
-    if (disabled) return;
-    onAnswer(items.map(item => item.id));
   };
 
   return (
@@ -104,15 +105,6 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
           </div>
         ))}
       </div>
-      
-      {!disabled && (
-        <button
-          onClick={handleSubmit}
-          className="w-full mt-8 py-5 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-black text-lg rounded-[1.5rem] shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-        >
-          Xác nhận thứ tự
-        </button>
-      )}
     </div>
   );
 };

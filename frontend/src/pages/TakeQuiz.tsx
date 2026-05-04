@@ -87,18 +87,17 @@ const TakeQuiz: React.FC = () => {
 
   const handleSelectChoice = (choiceId: number) => {
     const questionId = quiz.questions[currentQuestionIndex].id;
-    setAnswers({
-      ...answers,
+    setAnswers(prev => ({
+      ...prev,
       [questionId]: choiceId
-    });
+    }));
   };
 
-  const handleSpecialAnswer = (answer: any) => {
-    const questionId = quiz.questions[currentQuestionIndex].id;
-    setAnswers({
-      ...answers,
+  const handleSpecialAnswer = (questionId: number, answer: any) => {
+    setAnswers(prev => ({
+      ...prev,
       [questionId]: answer
-    });
+    }));
   };
 
   const handleNext = () => {
@@ -117,9 +116,15 @@ const TakeQuiz: React.FC = () => {
     const duration = Math.floor((Date.now() - startTime) / 1000);
 
     try {
+      // Ensure all keys are strings to avoid any ambiguity during serialization
+      const formattedAnswers: { [key: string]: any } = {};
+      Object.entries(answers).forEach(([key, val]) => {
+        formattedAnswers[String(key)] = val;
+      });
+
       const response = await api.post('/submit/', {
         quiz_id: id,
-        answers: answers,
+        answers: formattedAnswers,
         duration: duration
       });
       navigate(`/result/${response.data.id}`);
@@ -273,13 +278,13 @@ const TakeQuiz: React.FC = () => {
                 <OrderingQuestion 
                   key={`order-${currentQuestion.id}`}
                   choices={currentQuestion.choices} 
-                  onAnswer={handleSpecialAnswer} 
+                  onAnswer={(ans) => handleSpecialAnswer(currentQuestion.id, ans)} 
                 />
               ) : currentQuestion.question_type === 'MATCH' ? (
                 <MatchingQuestion 
                   key={`match-${currentQuestion.id}`}
                   choices={currentQuestion.choices} 
-                  onAnswer={handleSpecialAnswer} 
+                  onAnswer={(ans) => handleSpecialAnswer(currentQuestion.id, ans)} 
                 />
               ) : (
                 <div className={`grid gap-3 sm:gap-4 ${currentQuestion.question_type === 'TF' ? 'grid-cols-2' : 'grid-cols-1'}`}>

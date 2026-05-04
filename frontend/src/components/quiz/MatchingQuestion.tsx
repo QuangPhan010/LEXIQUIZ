@@ -26,18 +26,28 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ choices, onA
     setSelectedLeft(null);
   }, [choices]);
 
+  // Automatically report answer whenever matches change
+  useEffect(() => {
+    if (Object.keys(matches).length > 0 && !disabled) {
+      const formattedMatches: { [key: string]: string } = {};
+      Object.entries(matches).forEach(([key, val]) => {
+        formattedMatches[key] = val;
+      });
+      onAnswer(formattedMatches);
+    }
+  }, [matches, onAnswer, disabled]);
+
   const handleLeftClick = (id: number) => {
     if (disabled) return;
     if (selectedLeft === id) {
       setSelectedLeft(null);
       return;
     }
-    // If already matched, allow clicking to "unmatch"
     if (matches[id]) {
       const newMatches = { ...matches };
       delete newMatches[id];
       setMatches(newMatches);
-      setSelectedLeft(id); // Keep it selected to match with something else
+      setSelectedLeft(id);
       return;
     }
     setSelectedLeft(id);
@@ -46,7 +56,6 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ choices, onA
   const handleRightClick = (text: string) => {
     if (disabled || selectedLeft === null) return;
     
-    // Find if this text was already matched to another left item and remove that match
     const newMatches = { ...matches };
     Object.keys(newMatches).forEach(key => {
       if (newMatches[parseInt(key)] === text) {
@@ -61,21 +70,6 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ choices, onA
     setSelectedLeft(null);
   };
 
-  const handleSubmit = () => {
-    if (disabled) return;
-    // Check if all matched
-    if (Object.keys(matches).length < choices.length) {
-      alert('Vui lòng nối hết các cặp trước khi xác nhận!');
-      return;
-    }
-    
-    const formattedMatches: { [key: string]: string } = {};
-    Object.entries(matches).forEach(([key, val]) => {
-      formattedMatches[key] = val;
-    });
-    onAnswer(formattedMatches);
-  };
-
   const isMatchedRight = (text: string) => Object.values(matches).includes(text);
 
   return (
@@ -85,7 +79,6 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ choices, onA
       </p>
       
       <div className="grid grid-cols-2 gap-4 sm:gap-8">
-        {/* Left Column */}
         <div className="space-y-3">
           {leftItems.map((item) => (
             <button
@@ -111,7 +104,6 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ choices, onA
           ))}
         </div>
 
-        {/* Right Column */}
         <div className="space-y-3">
           {rightTexts.map((text, idx) => {
             const isMatched = isMatchedRight(text);
@@ -133,15 +125,6 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ choices, onA
           })}
         </div>
       </div>
-
-      {!disabled && (
-        <button
-          onClick={handleSubmit}
-          className="w-full mt-6 py-5 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-black text-lg rounded-[1.5rem] shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-        >
-          Xác nhận nối cặp
-        </button>
-      )}
     </div>
   );
 };

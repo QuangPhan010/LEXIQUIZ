@@ -301,10 +301,14 @@ class ResultViewSet(viewsets.ModelViewSet):
                 answers_data = {}
 
             for q in questions:
+                # Try multiple ways to get the answer from the dict
                 ans = answers_data.get(str(q.id))
+                if ans is None:
+                    ans = answers_data.get(q.id)
+                
                 is_correct = False
                 choice = None
-
+                
                 if q.question_type in ['MCQ', 'TF']:
                     if ans:
                         try:
