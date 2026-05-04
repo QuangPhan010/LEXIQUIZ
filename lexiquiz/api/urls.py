@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     QuizViewSet, ResultViewSet, AuthViewSet, CategoryViewSet, 
     LeaderboardViewSet, QuestViewSet, ShopViewSet, InventoryViewSet, 
-    SkillXPViewSet, CommentViewSet, QuizRatingViewSet
+    SkillXPViewSet, CommentViewSet, QuizRatingViewSet, GameRoomViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -21,6 +21,7 @@ router.register(r'inventory', InventoryViewSet, basename='inventory')
 router.register(r'skills', SkillXPViewSet, basename='skillxp')
 router.register(r'comments', CommentViewSet, basename='comment')
 router.register(r'ratings', QuizRatingViewSet, basename='rating')
+router.register(r'game-rooms', GameRoomViewSet, basename='game-room')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -4,7 +4,8 @@ import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Navbar } from '../components/Navbar';
-import { ChevronLeft, Info, HelpCircle, BarChart, Sparkles, Trash2, Lock, Globe, Settings } from 'lucide-react';
+import { UserAvatar } from '../components/UserAvatar';
+import { ChevronLeft, Info, HelpCircle, BarChart, Sparkles, Trash2, Lock, Globe, Settings, Play, Share2, X, Copy, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface QuizDetail {
@@ -30,6 +31,12 @@ const QuizDetail: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [userRating, setUserRating] = useState(0);
   const [submittingComment, setSubmittingComment] = useState(false);
+  
+  // Host Room States
+  const [showHostModal, setShowHostModal] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [roomPin, setRoomPin] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -116,6 +123,29 @@ const QuizDetail: React.FC = () => {
     }
   };
 
+  const handleHostLive = async () => {
+    if (!quiz) return;
+    setIsCreatingRoom(true);
+    try {
+      const response = await api.post(`/quizzes/${quiz.id}/create_room/`);
+      setRoomPin(response.data.pin);
+      setShowHostModal(true);
+    } catch (err) {
+      console.error('Failed to create room', err);
+      alert('Failed to create live room. Only the creator can host.');
+    } finally {
+      setIsCreatingRoom(false);
+    }
+  };
+
+  const copyJoinLink = () => {
+    if (!roomPin) return;
+    const link = `${window.location.origin}/join/${roomPin}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="h-12 w-12 animate-spin border-4 border-primary-500 border-t-transparent rounded-full" />
@@ -163,14 +193,28 @@ const QuizDetail: React.FC = () => {
               </div>
               <p className="text-slate-500 text-xl font-medium leading-relaxed">{quiz.description || 'No description provided, but we know you can handle this! Get ready to test your knowledge.'}</p>
             </div>
-            <div className="shrink-0">
+            <div className="shrink-0 flex flex-col gap-4">
               <Button 
                 size="lg" 
                 onClick={() => navigate(`/take/${quiz.id}`)}
                 className="w-full md:w-auto px-12 py-6 text-xl rounded-3xl shadow-2xl"
               >
+                <Play className="h-6 w-6 mr-3 fill-current" />
                 Start Quiz
               </Button>
+
+              {user && quiz.creator === user.id && (
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={handleHostLive}
+                  isLoading={isCreatingRoom}
+                  className="w-full md:w-auto px-12 py-6 text-xl rounded-3xl border-2 border-primary-600 text-primary-600 hover:bg-primary-50"
+                >
+                  <Share2 className="h-6 w-6 mr-3" />
+                  Host Live
+                </Button>
+              )}
             </div>
           </div>
         </Card>
@@ -225,6 +269,7 @@ const QuizDetail: React.FC = () => {
             </div>
           </div>
         </div>
+
         {/* Creator Controls */}
         {user && quiz.creator === user.id && (
           <div className="mt-12 bg-white rounded-3xl p-10 border-2 border-dashed border-slate-200">
@@ -299,15 +344,14 @@ const QuizDetail: React.FC = () => {
             {quiz.comments && quiz.comments.length > 0 ? (
               quiz.comments.map((comment) => (
                 <div key={comment.id} className="flex space-x-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="h-14 w-14 rounded-2xl bg-white shadow-lg overflow-hidden shrink-0">
-                    {comment.user_avatar ? (
-                      <img src={comment.user_avatar} alt={comment.username} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-slate-200 bg-slate-50">
-                        <Sparkles className="h-6 w-6" />
-                      </div>
-                    )}
-                  </div>
+                  <UserAvatar 
+                    user={{ 
+                      username: comment.username, 
+                      avatar: comment.user_avatar, 
+                      equipped_frame: comment.user_equipped_frame 
+                    }} 
+                    size="sm" 
+                  />
                   <div className="flex-1">
                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                       <div className="flex items-center justify-between mb-2">
@@ -329,6 +373,61 @@ const QuizDetail: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Host Live Modal */}
+        {showHostModal && roomPin && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+            <Card className="w-full max-w-sm p-8 border-0 shadow-2xl relative animate-in zoom-in-95 duration-300 bg-white">
+              <button 
+                onClick={() => setShowHostModal(false)}
+                className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="text-center">
+                <div className="inline-flex p-3 rounded-2xl bg-primary-50 text-primary-600 mb-4">
+                  <Share2 className="h-6 w-6" />
+                </div>
+                <h2 className="text-2xl font-black mb-1 text-slate-900 tracking-tight">Host Session</h2>
+                <p className="text-slate-500 mb-6 text-sm font-medium">Ready to start the battle?</p>
+
+                <div className="bg-slate-50 p-6 rounded-[2rem] mb-6 flex flex-col items-center border border-slate-100">
+                  <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/join/${roomPin}`)}`} 
+                      alt="Join QR Code"
+                      className="w-[150px] h-[150px]"
+                    />
+                  </div>
+                  
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Game PIN</p>
+                    <p className="text-4xl font-black text-primary-600 tracking-tighter">{roomPin}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    size="lg"
+                    className="w-full h-14 text-lg rounded-2xl shadow-md"
+                    onClick={() => navigate(`/host/${roomPin}`)}
+                  >
+                    Enter Lobby
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full h-12 rounded-xl border-slate-200 font-bold text-sm"
+                    onClick={copyJoinLink}
+                  >
+                    {copied ? <CheckCircle2 className="h-4 w-4 mr-2 text-accent-emerald" /> : <Copy className="h-4 w-4 mr-2 text-slate-400" />}
+                    {copied ? 'Link Copied!' : 'Copy Join Link'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );

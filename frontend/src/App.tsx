@@ -19,6 +19,9 @@ import Shop from './pages/Shop';
 import Skills from './pages/Skills';
 import LiveDuel from './pages/LiveDuel';
 import Dashboard from './pages/Dashboard';
+import JoinRoom from './pages/JoinRoom';
+import GameHost from './pages/GameHost';
+import GamePlay from './pages/GamePlay';
 
 function App() {
   return (
@@ -28,6 +31,8 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/join/:pin" element={<JoinRoom />} />
+          <Route path="/play/:pin" element={<GamePlay />} />
 
           {/* Protected Routes */}
           <Route
@@ -83,6 +88,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <LiveDuel />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/host/:pin"
+            element={
+              <ProtectedRoute>
+                <GameHost />
               </ProtectedRoute>
             }
           />

@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+import random
+import string
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -61,6 +63,9 @@ class Question(models.Model):
     text = models.TextField()
     order = models.PositiveIntegerField(default=0)
     question_type = models.CharField(max_length=10, choices=QUESTION_TYPES, default='MCQ')
+    time_limit_seconds = models.PositiveIntegerField(default=10)  # Per-question countdown
+    image = models.ImageField(upload_to='question_images/', null=True, blank=True)
+    video_url = models.CharField(max_length=512, blank=True)  # YouTube or direct video URL
 
     def __str__(self):
         return f"{self.quiz.title} - {self.text[:50]}"
@@ -190,3 +195,31 @@ class Follow(models.Model):
 
     class Meta:
         unique_together = ('follower', 'following')
+
+
+def generate_room_pin():
+    """Generate a unique 6-digit numeric PIN for a game room."""
+    while True:
+        pin = ''.join(random.choices(string.digits, k=6))
+        if not GameRoom.objects.filter(pin=pin, is_active=True).exists():
+            return pin
+
+
+class GameRoom(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='game_rooms')
+    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hosted_rooms')
+    pin = models.CharField(max_length=6, unique=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Room {self.pin} - {self.quiz.title} (Host: {self.host.username})"
+
+    def save(self, *args, **kwargs):
+        if not self.pin:
+            self.pin = generate_room_pin()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = "Game Room"
+        verbose_name_plural = "Game Rooms"

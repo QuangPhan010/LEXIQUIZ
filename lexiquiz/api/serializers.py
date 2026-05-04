@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from .models import (
     Quiz, Question, Choice, Result, Category, Profile, UserAnswer,
     DailyQuest, UserQuest, Item, UserInventory, SkillXP,
-    QuizRating, Comment, Follow
+    QuizRating, Comment, Follow, GameRoom
 )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,9 +15,20 @@ class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     is_streak_active = serializers.SerializerMethodField()
 
+    equipped_frame = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'coins', 'is_streak_active')
+        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'coins', 'is_streak_active', 'equipped_frame')
+
+    def get_equipped_frame(self, obj):
+        inventory = UserInventory.objects.filter(user=obj, item__item_type='FRAME', is_equipped=True).first()
+        if inventory and inventory.item.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(inventory.item.image.url)
+            return inventory.item.image.url
+        return None
 
     def get_avatar(self, obj):
         profile = getattr(obj, 'profile', None)
@@ -57,20 +68,32 @@ class ChoiceSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ('id', 'text', 'order', 'choices', 'question_type')
+        fields = ('id', 'text', 'order', 'choices', 'question_type', 'time_limit_seconds', 'image', 'video_url')
+
+    def get_image(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 class QuizSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True)
     questions_count = serializers.SerializerMethodField()
     category_name = serializers.ReadOnlyField(source='category.name')
+    creator_username = serializers.ReadOnlyField(source='creator.username')
+    creator_avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = Quiz
         fields = (
-            'id', 'title', 'description', 'created_at', 'creator', 
+            'id', 'title', 'description', 'created_at', 'creator',
+            'creator_username', 'creator_avatar',
             'questions', 'questions_count', 'category', 'category_name',
             'is_public', 'time_limit', 'tags'
         )
@@ -78,6 +101,15 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def get_questions_count(self, obj):
         return obj.questions.count()
+
+    def get_creator_avatar(self, obj):
+        profile = getattr(obj.creator, 'profile', None)
+        if profile and profile.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(profile.avatar.url)
+            return profile.avatar.url
+        return None
 
     def create(self, validated_data):
         questions_data = validated_data.pop('questions')
@@ -173,10 +205,11 @@ class SkillXPSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     username = serializers.ReadOnlyField(source='user.username')
     user_avatar = serializers.SerializerMethodField()
+    user_equipped_frame = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ('id', 'user', 'username', 'user_avatar', 'text', 'created_at')
+        fields = ('id', 'user', 'username', 'user_avatar', 'user_equipped_frame', 'text', 'created_at')
 
     def get_user_avatar(self, obj):
         if obj.user.profile.avatar:
@@ -186,7 +219,30 @@ class CommentSerializer(serializers.ModelSerializer):
             return obj.user.profile.avatar.url
         return None
 
+    def get_user_equipped_frame(self, obj):
+        inventory = UserInventory.objects.filter(user=obj.user, item__item_type='FRAME', is_equipped=True).first()
+        if inventory and inventory.item.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(inventory.item.image.url)
+            return inventory.item.image.url
+        return None
+
 class QuizRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuizRating
         fields = ('id', 'user', 'quiz', 'rating')
+
+
+class GameRoomSerializer(serializers.ModelSerializer):
+    quiz_title = serializers.ReadOnlyField(source='quiz.title')
+    host_username = serializers.ReadOnlyField(source='host.username')
+    questions_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GameRoom
+        fields = ('id', 'pin', 'quiz', 'quiz_title', 'host_username', 'is_active', 'created_at', 'questions_count')
+        read_only_fields = ('pin', 'host', 'created_at')
+
+    def get_questions_count(self, obj):
+        return obj.quiz.questions.count()

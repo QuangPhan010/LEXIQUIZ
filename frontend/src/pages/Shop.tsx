@@ -130,8 +130,8 @@ const Shop: React.FC = () => {
               const IconComponent = icons[item.item_type] || Sparkles;
 
               return (
-                <Card key={item.id} className="group overflow-hidden border-0 shadow-2xl hover:scale-[1.02] transition-all duration-300">
-                  <div className="h-48 bg-gradient-to-br from-slate-50 to-slate-100 relative flex items-center justify-center p-8">
+                <Card key={item.id} className="group overflow-hidden border-0 shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col">
+                  <div className="h-48 bg-gradient-to-br from-slate-50 to-slate-100 relative flex items-center justify-center p-8 shrink-0">
                     {item.image ? (
                       <img src={item.image} alt={item.name} className="h-full object-contain drop-shadow-2xl" />
                     ) : (
@@ -144,9 +144,9 @@ const Shop: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="p-8">
+                  <div className="p-8 flex flex-col flex-grow">
                     <h3 className="text-xl font-black text-slate-900 mb-2">{item.name}</h3>
-                    <p className="text-slate-500 text-sm mb-8 leading-relaxed h-12 line-clamp-2">
+                    <p className="text-slate-500 text-sm mb-8 leading-relaxed">
                       {item.description}
                     </p>
                     

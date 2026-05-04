@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/Button';
 import { LogOut, History, BookOpen, PlusCircle, User as UserIcon, Zap, Trophy, ShoppingBag, Brain, Layout, Flame, Target } from 'lucide-react';
+import { UserAvatar } from './UserAvatar';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -75,14 +76,7 @@ export const Navbar: React.FC = () => {
                       </div>
                       <p className="text-sm font-black text-slate-900">Level {user.level || 1} • {user.xp} XP</p>
                     </div>
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-primary-500/10 to-accent-violet/10 flex items-center justify-center text-primary-600 relative overflow-hidden group/avatar">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.username} className="h-full w-full object-cover" />
-                      ) : (
-                        <UserIcon className="h-5 w-5" />
-                      )}
-                      <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover/avatar:opacity-10 transition-opacity" />
-                    </div>
+                    <UserAvatar user={user} size="md" className="group-hover/avatar:scale-105 transition-transform" />
                   </Link>
                   <Button variant="ghost" size="sm" onClick={handleLogout} className="text-slate-400 hover:text-rose-500">
                     <LogOut className="h-5 w-5" />

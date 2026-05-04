@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { Navbar } from '../components/Navbar';
+import { UserAvatar } from '../components/UserAvatar';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -62,6 +63,7 @@ const Profile: React.FC = () => {
   const [myQuizzes, setMyQuizzes] = useState<Quiz[]>([]);
   const [quests, setQuests] = useState<any[]>([]);
   const [skillXP, setSkillXP] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -77,18 +79,26 @@ const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (user?.avatar) {
+      setAvatarPreview(user.avatar);
+    }
+  }, [user?.avatar]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, quizzesRes, questsRes, skillsRes] = await Promise.all([
+        const [statsRes, quizzesRes, questsRes, skillsRes, inventoryRes] = await Promise.all([
           api.get('/auth/stats/'),
           api.get('/quizzes/my_quizzes/'),
           api.get('/quests/'),
-          api.get('/skills/')
+          api.get('/skills/'),
+          api.get('/inventory/')
         ]);
         setStats(statsRes.data);
         setMyQuizzes(quizzesRes.data);
         setQuests(questsRes.data);
         setSkillXP(skillsRes.data);
+        setInventory(inventoryRes.data);
       } catch (err) {
         console.error('Failed to fetch profile data', err);
       } finally {
@@ -128,11 +138,7 @@ const Profile: React.FC = () => {
     }
 
     try {
-      await api.patch('/auth/me/', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await api.patch('/auth/me/', data);
       await refreshUser();
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(null), 3000);
@@ -153,6 +159,19 @@ const Profile: React.FC = () => {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Failed to claim quest', err);
+    }
+  };
+
+  const handleEquip = async (itemId: number) => {
+    try {
+      await api.post(`/inventory/${itemId}/equip/`);
+      const invRes = await api.get('/inventory/');
+      setInventory(invRes.data);
+      refreshUser();
+      setSuccess('Customization updated!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Failed to equip item', err);
     }
   };
 
@@ -177,18 +196,10 @@ const Profile: React.FC = () => {
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 to-accent-violet" />
               
               <div className="relative inline-block mb-6">
-                <div className="h-32 w-32 rounded-3xl bg-gradient-to-tr from-primary-500 to-accent-violet p-1 shadow-2xl shadow-primary-500/20">
-                  <div className="h-full w-full rounded-[22px] bg-white overflow-hidden flex items-center justify-center">
-                    {avatarPreview ? (
-                      <img src={avatarPreview} alt="Profile" className="h-full w-full object-cover" />
-                    ) : (
-                      <UserIcon className="h-16 w-16 text-slate-200" />
-                    )}
-                  </div>
-                </div>
+                <UserAvatar user={user} avatarOverride={avatarPreview} size="2xl" />
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-2xl shadow-xl border border-slate-100 text-primary-600 hover:text-primary-700 transition-all hover:scale-110 active:scale-95"
+                  className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-2xl shadow-xl border border-slate-100 text-primary-600 hover:text-primary-700 transition-all hover:scale-110 active:scale-95 z-20"
                 >
                   <Camera className="h-5 w-5" />
                 </button>
@@ -295,19 +306,20 @@ const Profile: React.FC = () => {
                     };
                     const IconComponent = icons[badge.icon] || Trophy;
 
-                    const colorMap = {
+                    const colorMapObj: { [key: string]: string } = {
                       blue: 'bg-blue-50 text-blue-600 border-blue-100',
                       purple: 'bg-purple-50 text-purple-600 border-purple-100',
                       emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
                       rose: 'bg-rose-50 text-rose-500 border-rose-100',
                       amber: 'bg-amber-50 text-amber-600 border-amber-100',
                       indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-                    }[badge.color as keyof typeof colorMap] || 'bg-slate-50 text-slate-600 border-slate-100';
+                    };
+                    const colorClass = colorMapObj[badge.color] || 'bg-slate-50 text-slate-600 border-slate-100';
 
                     return (
                       <div key={badge.id} className="group relative">
                         <div className={`flex flex-col items-center justify-center h-16 w-16 rounded-2xl border-2 transition-all group-hover:scale-110 ${
-                          badge.earned ? colorMap : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-40'
+                          badge.earned ? colorClass : 'bg-slate-100 text-slate-400 border-slate-200 grayscale opacity-40'
                         }`}>
                           <IconComponent className="h-7 w-7" />
                         </div>
@@ -501,6 +513,50 @@ const Profile: React.FC = () => {
                       <p className="text-slate-400 font-bold mb-4">You haven't created any quizzes yet.</p>
                       <Link to="/create-quiz">
                         <Button variant="outline" className="rounded-xl">Create Your First Quiz</Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Avatar Frames / Customization Section */}
+              <div className="mt-16 pt-16 border-t border-slate-100">
+                <div className="flex items-center space-x-4 mb-8">
+                  <div className="h-12 w-12 rounded-2xl bg-accent-violet/10 flex items-center justify-center text-accent-violet">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900">Customization</h2>
+                    <p className="text-slate-400 font-medium">Equip frames and themes you've unlocked.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {inventory.filter(i => i.item.item_type === 'FRAME').length > 0 ? (
+                    inventory.filter(i => i.item.item_type === 'FRAME').map((inv) => (
+                      <div key={inv.id} className={`group p-6 rounded-[32px] border-2 transition-all duration-300 ${inv.is_equipped ? 'border-primary-500 bg-primary-50/30' : 'border-slate-50 bg-white hover:border-slate-200'}`}>
+                        <div className="flex flex-col items-center text-center">
+                          <div className="h-24 w-24 relative mb-4">
+                            <UserAvatar user={{ ...user!, equipped_frame: inv.item.image }} size="xl" />
+                          </div>
+                          <h4 className="font-black text-slate-800 mb-1">{inv.item.name}</h4>
+                          <p className="text-xs text-slate-400 mb-6">{inv.item.description}</p>
+                          <Button 
+                            variant={inv.is_equipped ? "accent" : "outline"} 
+                            size="sm" 
+                            className="w-full rounded-xl font-bold"
+                            onClick={() => handleEquip(inv.id)}
+                          >
+                            {inv.is_equipped ? 'Unequip' : 'Equip'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-12 text-center bg-slate-50/50 rounded-[40px] border-2 border-dashed border-slate-200">
+                      <p className="text-slate-400 font-bold mb-4">No frames unlocked yet.</p>
+                      <Link to="/shop">
+                        <Button variant="outline" className="rounded-xl">Visit LexiShop</Button>
                       </Link>
                     </div>
                   )}

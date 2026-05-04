@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Navbar } from '../components/Navbar';
+import { UserAvatar } from '../components/UserAvatar';
 import { Trophy, Medal, Zap, Crown, User as UserIcon } from 'lucide-react';
 
 interface LeaderboardEntry {
   username: string;
   xp: number;
   level: number;
+  avatar?: string | null;
+  equipped_frame?: string | null;
 }
 
 const Leaderboard: React.FC = () => {
@@ -61,9 +64,7 @@ const Leaderboard: React.FC = () => {
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-100 text-slate-500 p-3 rounded-2xl shadow-md">
                   <Medal className="h-6 w-6" />
                 </div>
-                <div className="h-20 w-20 rounded-full bg-slate-50 mx-auto mb-4 flex items-center justify-center border-4 border-white shadow-lg">
-                  <UserIcon className="h-10 w-10 text-slate-300" />
-                </div>
+                <UserAvatar user={top3[1]} size="lg" className="mx-auto mb-4" />
                 <h3 className="text-xl font-black text-slate-800">{top3[1].username}</h3>
                 <p className="text-slate-400 font-bold text-sm mb-4">Level {top3[1].level}</p>
                 <div className="inline-flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-xl text-slate-600 font-black">
@@ -81,9 +82,7 @@ const Leaderboard: React.FC = () => {
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-accent-amber text-white p-5 rounded-3xl shadow-xl animate-pulse">
                   <Crown className="h-10 w-10 fill-current" />
                 </div>
-                <div className="h-24 w-24 rounded-full bg-accent-amber/10 mx-auto mb-4 flex items-center justify-center border-4 border-white shadow-xl">
-                  <UserIcon className="h-12 w-12 text-accent-amber" />
-                </div>
+                <UserAvatar user={top3[0]} size="xl" className="mx-auto mb-4" />
                 <h3 className="text-2xl font-black text-slate-900">{top3[0].username}</h3>
                 <p className="text-primary-500 font-black text-base mb-6">Level {top3[0].level}</p>
                 <div className="inline-flex items-center space-x-2 bg-accent-amber/20 px-6 py-3 rounded-2xl text-accent-amber font-black text-lg">
@@ -101,9 +100,7 @@ const Leaderboard: React.FC = () => {
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-orange-50 text-orange-400 p-3 rounded-2xl shadow-md">
                   <Medal className="h-6 w-6" />
                 </div>
-                <div className="h-20 w-20 rounded-full bg-orange-50 mx-auto mb-4 flex items-center justify-center border-4 border-white shadow-lg">
-                  <UserIcon className="h-10 w-10 text-orange-200" />
-                </div>
+                <UserAvatar user={top3[2]} size="lg" className="mx-auto mb-4" />
                 <h3 className="text-xl font-black text-slate-800">{top3[2].username}</h3>
                 <p className="text-slate-400 font-bold text-sm mb-4">Level {top3[2].level}</p>
                 <div className="inline-flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-xl text-slate-600 font-black">
@@ -128,9 +125,7 @@ const Leaderboard: React.FC = () => {
               <div key={index} className="px-8 py-6 grid grid-cols-12 gap-4 items-center hover:bg-slate-50/50 transition-colors">
                 <div className="col-span-1 font-black text-slate-300 text-lg">#{index + 4}</div>
                 <div className="col-span-7 flex items-center space-x-4">
-                  <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
-                    {entry.username.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar user={entry} size="md" />
                   <span className="font-bold text-slate-800 text-lg">{entry.username}</span>
                 </div>
                 <div className="col-span-2 text-center font-black text-primary-600">

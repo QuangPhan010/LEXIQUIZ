@@ -19,7 +19,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUser = useCallback(async () => {
     try {
       const response = await api.get('/auth/me/');
-      setUser(response.data);
+      const userData = response.data;
+      // Append cache buster to avatar to ensure immediate update in Navbar after change
+      if (userData.avatar && !userData.avatar.includes('?v=')) {
+        userData.avatar = `${userData.avatar}?v=${new Date().getTime()}`;
+      }
+      setUser(userData);
     } catch (err) {
       console.error('Failed to fetch user', err);
       localStorage.removeItem('token');

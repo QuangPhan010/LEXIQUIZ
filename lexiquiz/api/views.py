@@ -6,14 +6,14 @@ from django.db.models import Count, Avg, Q
 from .models import (
     Quiz, Question, Choice, Result, Category, Profile, UserAnswer,
     DailyQuest, UserQuest, Item, UserInventory, SkillXP,
-    QuizRating, Comment, Follow
+    QuizRating, Comment, Follow, GameRoom
 )
 from .serializers import (
     QuizSerializer, QuizDetailSerializer, QuestionSerializer, 
     ResultSerializer, UserSerializer, CategorySerializer, 
     UserAnswerSerializer, DailyQuestSerializer, UserQuestSerializer,
     ItemSerializer, UserInventorySerializer, SkillXPSerializer,
-    CommentSerializer, QuizRatingSerializer
+    CommentSerializer, QuizRatingSerializer, GameRoomSerializer
 )
 from datetime import date, timedelta
 from django.utils import timezone
@@ -142,7 +142,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
 
-from .utils import extract_text_from_pdf, extract_text_from_docx, generate_quiz_from_text
+from .utils import extract_text_from_pdf, extract_text_from_docx, generate_quiz_from_text, extract_questions_from_text
 
 class QuizViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
@@ -189,6 +189,44 @@ class QuizViewSet(viewsets.ModelViewSet):
             import traceback
             traceback.print_exc()
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def import_questions(self, request):
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if file.name.endswith('.pdf'):
+                text = extract_text_from_pdf(file)
+            elif file.name.endswith('.docx'):
+                text = extract_text_from_docx(file)
+            else:
+                return Response({"error": "Unsupported file format"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not text.strip():
+                return Response({"error": "No text could be extracted from the file"}, status=status.HTTP_400_BAD_REQUEST)
+
+            questions = extract_questions_from_text(text)
+            return Response({"questions": questions})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def create_room(self, request, pk=None):
+        """Create a live game room for this quiz and return the PIN."""
+        quiz = self.get_object()
+        if quiz.creator != request.user:
+            return Response({"error": "Only the quiz creator can host a live session."},
+                            status=status.HTTP_403_FORBIDDEN)
+        # Deactivate any existing active rooms for this quiz by this host
+        GameRoom.objects.filter(quiz=quiz, host=request.user, is_active=True).update(is_active=False)
+        # Create new room
+        room = GameRoom.objects.create(quiz=quiz, host=request.user)
+        serializer = GameRoomSerializer(room, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class ResultViewSet(viewsets.ModelViewSet):
     serializer_class = ResultSerializer
@@ -315,8 +353,20 @@ class LeaderboardViewSet(viewsets.ViewSet):
         profiles = Profile.objects.all().order_by('-xp')[:20]
         data = []
         for p in profiles:
+            # Get equipped frame
+            frame = None
+            inventory = UserInventory.objects.filter(user=p.user, item__item_type='FRAME', is_equipped=True).first()
+            if inventory and inventory.item.image:
+                frame = request.build_absolute_uri(inventory.item.image.url)
+            
+            avatar = None
+            if p.avatar:
+                avatar = request.build_absolute_uri(p.avatar.url)
+
             data.append({
                 'username': p.user.username,
+                'avatar': avatar,
+                'equipped_frame': frame,
                 'xp': p.xp,
                 'level': p.level,
                 'streak': p.streak_count
@@ -378,9 +428,16 @@ class InventoryViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def equip(self, request, pk=None):
         inv_item = self.get_object()
-        # Unequip others of same type if needed? 
-        # For now just toggle
-        inv_item.is_equipped = not inv_item.is_equipped
+        item_type = inv_item.item.item_type
+        
+        if not inv_item.is_equipped:
+            # Unequip others of same type if it's a FRAME or THEME (usually exclusive)
+            if item_type in ['FRAME', 'THEME']:
+                UserInventory.objects.filter(user=request.user, item__item_type=item_type, is_equipped=True).update(is_equipped=False)
+            inv_item.is_equipped = True
+        else:
+            inv_item.is_equipped = False
+            
         inv_item.save()
         return Response({"is_equipped": inv_item.is_equipped})
 
@@ -421,3 +478,28 @@ class QuizRatingViewSet(viewsets.ModelViewSet):
             user=user, quiz=quiz,
             defaults={'rating': rating}
         )
+
+
+class GameRoomViewSet(viewsets.ViewSet):
+    """Endpoints for game room management (Kahoot-style)."""
+
+    @action(detail=False, methods=['get'], url_path='(?P<pin>[0-9]{6})')
+    def join(self, request, pin=None):
+        """Get room info by PIN — used by players before joining via WebSocket."""
+        try:
+            room = GameRoom.objects.get(pin=pin, is_active=True)
+        except GameRoom.DoesNotExist:
+            return Response({"error": "Room not found or no longer active."},
+                            status=status.HTTP_404_NOT_FOUND)
+        serializer = GameRoomSerializer(room, context={'request': request})
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """Also allow GET /game-rooms/{pin}/."""
+        try:
+            room = GameRoom.objects.get(pin=pk, is_active=True)
+        except GameRoom.DoesNotExist:
+            return Response({"error": "Room not found or no longer active."},
+                            status=status.HTTP_404_NOT_FOUND)
+        serializer = GameRoomSerializer(room, context={'request': request})
+        return Response(serializer.data)

@@ -4,7 +4,7 @@ import api from '../api/axios';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Navbar } from '../components/Navbar';
-import { Trophy, Clock, Play, Sparkles, Book, Tag, ChevronRight, Filter, Sword } from 'lucide-react';
+import { Trophy, Clock, Play, Sparkles, Book, Tag, ChevronRight, Filter, Sword, X, Plus, Hash, Zap } from 'lucide-react';
 
 interface Category {
   id: number;
@@ -21,6 +21,8 @@ interface Quiz {
   created_at: string;
   category_name?: string;
   tags?: string;
+  creator_username?: string;
+  creator_avatar?: string | null;
 }
 
 const Home: React.FC = () => {
@@ -28,6 +30,8 @@ const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDuelModal, setShowDuelModal] = useState(false);
+  const [roomId, setRoomId] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +52,18 @@ const Home: React.FC = () => {
     fetchData();
   }, []);
 
+  const handleCreateRoom = () => {
+    // Generate a random 6-digit room code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    navigate(`/duel/${code}`);
+  };
+
+  const handleJoinRoom = () => {
+    if (roomId.trim()) {
+      navigate(`/duel/${roomId.trim()}`);
+    }
+  };
+
   const filteredQuizzes = selectedCategory 
     ? quizzes.filter(q => q.category_name === categories.find(c => c.id === selectedCategory)?.name)
     : quizzes;
@@ -63,6 +79,93 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-mesh text-slate-900">
       <Navbar />
+
+      {/* Live Duel Modal */}
+      {showDuelModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(8px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowDuelModal(false); }}
+        >
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
+            {/* Header */}
+            <div className="relative bg-primary-600 p-6 text-white overflow-hidden">
+              <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10" />
+              <div className="absolute -right-2 -bottom-8 h-24 w-24 rounded-full bg-white/10" />
+              <button
+                onClick={() => setShowDuelModal(false)}
+                className="absolute top-4 right-4 h-6 w-6 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              <div className="relative">
+                <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                  <Sword className="h-5 w-5" />
+                </div>
+                <h2 className="text-xl font-black tracking-tight">Live Duel</h2>
+                <p className="text-primary-100 text-xs mt-1">Real-time battle awaits!</p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-8 space-y-4">
+              {/* Create Room */}
+              <button
+                onClick={handleCreateRoom}
+                className="w-full group p-5 rounded-2xl border-2 border-slate-100 hover:border-rose-200 hover:bg-rose-50/50 transition-all duration-200 text-left flex items-center space-x-4"
+              >
+                <div className="h-12 w-12 rounded-xl bg-rose-100 group-hover:bg-rose-200 flex items-center justify-center text-rose-500 transition-colors shrink-0">
+                  <Plus className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="font-black text-slate-900">Create a Room</p>
+                  <p className="text-sm text-slate-400">Get a code and invite your friends</p>
+                </div>
+                <Zap className="h-5 w-5 text-rose-400 ml-auto group-hover:text-rose-500 transition-colors" />
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center space-x-3">
+                <div className="flex-1 h-px bg-slate-100" />
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">or join</span>
+                <div className="flex-1 h-px bg-slate-100" />
+              </div>
+
+              {/* Join Room */}
+              <div className="p-5 rounded-2xl border-2 border-slate-100 space-y-3">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="h-12 w-12 rounded-xl bg-primary-100 flex items-center justify-center text-primary-500 shrink-0">
+                    <Hash className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900">Join a Room</p>
+                    <p className="text-sm text-slate-400">Enter the room code below</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={roomId}
+                    onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
+                    placeholder="Room code (e.g. AB12CD)"
+                    maxLength={8}
+                    className="flex-1 h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-primary-400 outline-none font-bold tracking-widest text-slate-800 placeholder:font-normal placeholder:tracking-normal bg-slate-50"
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handleJoinRoom}
+                    disabled={!roomId.trim()}
+                    className="h-12 px-6 rounded-xl font-bold shrink-0"
+                  >
+                    Join
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
         <div className="mb-16 text-center max-w-3xl mx-auto">
@@ -87,10 +190,7 @@ const Home: React.FC = () => {
               variant="outline" 
               size="lg" 
               className="w-full sm:w-auto rounded-2xl h-16 px-10 text-lg border-2 border-slate-100 hover:border-rose-500/20 hover:bg-rose-50/50 transition-all"
-              onClick={() => {
-                const room = prompt('Enter Room Name to Join or Create:');
-                if (room) navigate(`/duel/${room}`);
-              }}
+              onClick={() => { setRoomId(''); setShowDuelModal(true); }}
             >
               <Sword className="h-5 w-5 mr-3 text-rose-500" />
               Live Duel
@@ -186,12 +286,23 @@ const Home: React.FC = () => {
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className={`h-8 w-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400`}>
-                        {String.fromCharCode(64 + i)}
+                  {/* Author */}
+                  <div className="flex items-center space-x-2">
+                    {quiz.creator_avatar ? (
+                      <img
+                        src={quiz.creator_avatar}
+                        alt={quiz.creator_username}
+                        className="h-8 w-8 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-violet flex items-center justify-center text-white text-[11px] font-black shadow-sm">
+                        {(quiz.creator_username?.[0] ?? '?').toUpperCase()}
                       </div>
-                    ))}
+                    )}
+                    <div>
+                      <p className="text-[11px] text-slate-400 leading-none">by</p>
+                      <p className="text-xs font-bold text-slate-600 leading-tight">{quiz.creator_username ?? 'Unknown'}</p>
+                    </div>
                   </div>
                   <Link to={`/quiz/${quiz.id}`}>
                     <Button variant="primary" size="sm" className="rounded-xl group/btn">
