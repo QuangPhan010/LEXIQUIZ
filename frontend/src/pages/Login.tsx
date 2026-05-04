@@ -22,7 +22,7 @@ const Login: React.FC = () => {
       await login({ username, password });
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Oops! Wrong username or password.');
+      setError(err.response?.data?.detail || 'Sai tên đăng nhập hoặc mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -43,20 +43,20 @@ const Login: React.FC = () => {
               LEXIQUIZ
             </span>
           </div>
-          <h1 className="text-5xl font-black text-[#1e293b] mb-2 tracking-tight">Welcome back!</h1>
-          <p className="text-[#64748b] font-bold">Ready to continue your learning journey?</p>
+          <h1 className="text-5xl font-black text-[#1e293b] mb-2 tracking-tight">Chào mừng trở lại!</h1>
+          <p className="text-[#64748b] font-bold">Sẵn sàng tiếp tục hành trình học tập của bạn?</p>
         </div>
 
         <Card className="bg-white border-0 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-[#1e293b] ml-1">Username</label>
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Tên đăng nhập</label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
                   <UserIcon className="h-5 w-5" />
                 </div>
                 <Input
-                  placeholder="Your super nickname"
+                  placeholder="Biệt danh siêu ngầu của bạn"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-12 bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
@@ -66,14 +66,14 @@ const Login: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-[#1e293b] ml-1">Password</label>
+              <label className="text-sm font-bold text-[#1e293b] ml-1">Mật khẩu</label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500">
                   <LogIn className="h-5 w-5" />
                 </div>
                 <Input
                   type="password"
-                  placeholder="Your secret code"
+                  placeholder="Chìa khóa bí mật của bạn"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-12 bg-[#f8fafc] border-slate-100 h-14 rounded-2xl"
@@ -81,7 +81,7 @@ const Login: React.FC = () => {
                 />
               </div>
               <div className="flex justify-end pr-1">
-                <button type="button" className="text-xs font-bold text-primary-600 hover:text-primary-700">Forgot it?</button>
+                <button type="button" className="text-xs font-bold text-primary-600 hover:text-primary-700">Quên chìa khóa bí mật?</button>
               </div>
             </div>
 
@@ -98,9 +98,9 @@ const Login: React.FC = () => {
 
           <div className="mt-8 text-center">
             <p className="text-slate-500 font-bold flex items-center justify-center space-x-2">
-              <span>New here?</span>
+              <span>Chưa có tài khoản?</span>
               <Link to="/register" className="text-primary-600 hover:text-primary-700 underline decoration-2 underline-offset-4">
-                Join the fun!
+                Tham gia ngay!
               </Link>
               <span className="text-amber-400">
                 <svg width="20" height="10" viewBox="0 0 20 10" fill="none" xmlns="http://www.w3.org/2000/svg">

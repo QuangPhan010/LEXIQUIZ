@@ -102,8 +102,8 @@ const Home: React.FC = () => {
                 <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center mb-3">
                   <Sword className="h-5 w-5" />
                 </div>
-                <h2 className="text-xl font-black tracking-tight">Live Duel</h2>
-                <p className="text-primary-100 text-xs mt-1">Real-time battle awaits!</p>
+                <h2 className="text-xl font-black tracking-tight">Thách đấu trực tiếp</h2>
+                <p className="text-primary-100 text-xs mt-1">Trận chiến thời gian thực đang chờ bạn!</p>
               </div>
             </div>
 
@@ -118,8 +118,8 @@ const Home: React.FC = () => {
                   <Plus className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="font-black text-slate-900">Create a Room</p>
-                  <p className="text-sm text-slate-400">Get a code and invite your friends</p>
+                  <p className="font-black text-slate-900">Tạo phòng</p>
+                  <p className="text-sm text-slate-400">Nhận mã và mời bạn bè tham gia</p>
                 </div>
                 <Zap className="h-5 w-5 text-rose-400 ml-auto group-hover:text-rose-500 transition-colors" />
               </button>
@@ -127,7 +127,7 @@ const Home: React.FC = () => {
               {/* Divider */}
               <div className="flex items-center space-x-3">
                 <div className="flex-1 h-px bg-slate-100" />
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">or join</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">hoặc tham gia</span>
                 <div className="flex-1 h-px bg-slate-100" />
               </div>
 
@@ -138,8 +138,8 @@ const Home: React.FC = () => {
                     <Hash className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="font-black text-slate-900">Join a Room</p>
-                    <p className="text-sm text-slate-400">Enter the room code below</p>
+                    <p className="font-black text-slate-900">Tham gia phòng</p>
+                    <p className="text-sm text-slate-400">Nhập mã phòng bên dưới</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -148,7 +148,7 @@ const Home: React.FC = () => {
                     value={roomId}
                     onChange={(e) => setRoomId(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
-                    placeholder="Room code (e.g. AB12CD)"
+                    placeholder="Mã phòng (VD: AB12CD)"
                     maxLength={8}
                     className="flex-1 h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-primary-400 outline-none font-bold tracking-widest text-slate-800 placeholder:font-normal placeholder:tracking-normal bg-slate-50"
                     autoFocus
@@ -158,7 +158,7 @@ const Home: React.FC = () => {
                     disabled={!roomId.trim()}
                     className="h-12 px-6 rounded-xl font-bold shrink-0"
                   >
-                    Join
+                    Vào phòng
                   </Button>
                 </div>
               </div>
@@ -171,19 +171,19 @@ const Home: React.FC = () => {
         <div className="mb-16 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center space-x-2 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-white mb-6 animate-bounce">
             <Sparkles className="h-4 w-4 text-accent-amber" />
-            <span className="text-sm font-bold text-slate-600">Level up your skills today!</span>
+            <span className="text-sm font-bold text-slate-600">Nâng cao kỹ năng của bạn ngay hôm nay!</span>
           </div>
           <h1 className="text-5xl font-black tracking-tight sm:text-6xl mb-6 bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent">
-            Ready for a <span className="text-primary-600 underline decoration-accent-pink/30 decoration-8 underline-offset-4">Challenge?</span>
+            Sẵn sàng cho các <span className="text-primary-600 underline decoration-accent-pink/30 decoration-8 underline-offset-4">Thử thách?</span>
           </h1>
           <p className="text-xl text-slate-500 leading-relaxed mb-10">
-            Pick a topic, test your knowledge, and earn your bragging rights! 🚀
+            Chọn chủ đề, kiểm tra kiến thức và khẳng định bản thân! 🚀
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
             <Link to="/create-quiz" className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto rounded-2xl h-16 px-10 text-lg shadow-xl shadow-primary-500/10">
-                Create Quiz
+                Tạo Quiz
               </Button>
             </Link>
             <Button 
@@ -193,7 +193,7 @@ const Home: React.FC = () => {
               onClick={() => { setRoomId(''); setShowDuelModal(true); }}
             >
               <Sword className="h-5 w-5 mr-3 text-rose-500" />
-              Live Duel
+              Thách đấu trực tiếp
             </Button>
           </div>
         </div>
@@ -210,7 +210,7 @@ const Home: React.FC = () => {
               }`}
             >
               <Filter className="h-4 w-4" />
-              <span>All Quizzes</span>
+              <span>Tất cả Quiz</span>
             </button>
             {categories.map((cat) => (
               <button
@@ -240,10 +240,10 @@ const Home: React.FC = () => {
         ) : filteredQuizzes.length === 0 ? (
           <Card className="text-center py-24 bg-white/50 border-dashed border-2">
             <Trophy className="h-20 w-20 text-slate-200 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-slate-800">No quizzes found</h3>
-            <p className="text-slate-500 mt-2">Try selecting another category or create your own!</p>
+            <h3 className="text-2xl font-bold text-slate-800">Không tìm thấy bộ câu hỏi nào</h3>
+            <p className="text-slate-500 mt-2">Thử chọn danh mục khác hoặc tự tạo bộ câu hỏi của riêng bạn!</p>
             <Link to="/create-quiz" className="mt-8 inline-block">
-              <Button variant="accent">Create a Quiz</Button>
+              <Button variant="accent">Tạo một Quiz</Button>
             </Link>
           </Card>
         ) : (
@@ -258,7 +258,7 @@ const Home: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
                         <Book className="h-4 w-4" />
-                        <span>{quiz.questions_count} Qs</span>
+                        <span>{quiz.questions_count} Câu</span>
                       </div>
                     </div>
                     <div className="flex items-center text-slate-400 text-[10px] font-medium">
@@ -270,7 +270,7 @@ const Home: React.FC = () => {
                     {quiz.title}
                   </h2>
                   <p className="text-slate-500 text-base line-clamp-3 mb-6">
-                    {quiz.description || 'Time to show what you know! Jump in and take this challenge.'}
+                    {quiz.description || 'Đã đến lúc thể hiện kiến thức của bạn! Tham gia ngay nào.'}
                   </p>
                   
                   {quiz.tags && (
@@ -300,13 +300,13 @@ const Home: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <p className="text-[11px] text-slate-400 leading-none">by</p>
-                      <p className="text-xs font-bold text-slate-600 leading-tight">{quiz.creator_username ?? 'Unknown'}</p>
+                      <p className="text-[11px] text-slate-400 leading-none">bởi</p>
+                      <p className="text-xs font-bold text-slate-600 leading-tight">{quiz.creator_username ?? 'Ẩn danh'}</p>
                     </div>
                   </div>
                   <Link to={`/quiz/${quiz.id}`}>
                     <Button variant="primary" size="sm" className="rounded-xl group/btn">
-                      Start Quiz
+                      Bắt đầu
                       <Play className="h-4 w-4 ml-2 fill-current group-hover/btn:translate-x-1 transition-transform" />
                     </Button>
                   </Link>

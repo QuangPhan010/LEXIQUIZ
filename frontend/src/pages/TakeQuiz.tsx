@@ -26,13 +26,27 @@ const TakeQuiz: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
+  const shuffleArray = (array: any[]) => {
+    return [...array].sort(() => Math.random() - 0.5);
+  };
+
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         const response = await api.get(`/quizzes/${id}/`);
-        setQuiz(response.data);
-        if (response.data.time_limit > 0) {
-          setTimeLeft(response.data.time_limit);
+        const quizData = response.data;
+        
+        // Randomize choices for each question
+        if (quizData.questions) {
+          quizData.questions = quizData.questions.map((q: any) => ({
+            ...q,
+            choices: shuffleArray(q.choices)
+          }));
+        }
+        
+        setQuiz(quizData);
+        if (quizData.time_limit > 0) {
+          setTimeLeft(quizData.time_limit);
         }
       } catch (err) {
         console.error('Failed to fetch quiz', err);
@@ -93,7 +107,7 @@ const TakeQuiz: React.FC = () => {
       navigate(`/result/${response.data.id}`);
     } catch (err) {
       console.error('Failed to submit quiz', err);
-      alert('Error submitting quiz. Please try again.');
+      alert('Ui da! Lỗi khi nộp bài rồi. Thử lại cái nè.');
     } finally {
       setSubmitting(false);
     }
@@ -118,9 +132,9 @@ const TakeQuiz: React.FC = () => {
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <Card className="max-w-md w-full text-center p-10">
           <HelpCircle className="h-16 w-16 text-slate-300 mx-auto mb-6" />
-          <h2 className="text-2xl font-black text-slate-900 mb-4">No Questions Found</h2>
-          <p className="text-slate-500 mb-8">This quiz seems to have no questions. Please try another one.</p>
-          <Button onClick={() => navigate('/')}>Go Back Home</Button>
+          <h2 className="text-2xl font-black text-slate-900 mb-4">Không tìm thấy câu hỏi</h2>
+          <p className="text-slate-500 mb-8">Bộ câu hỏi này dường như không có câu hỏi nào. Vui lòng thử bộ khác.</p>
+          <Button onClick={() => navigate('/')}>Quay lại Trang chủ</Button>
         </Card>
       </div>
     );
@@ -136,7 +150,7 @@ const TakeQuiz: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
           <button 
             onClick={() => {
-              if (window.confirm('Are you sure you want to leave? Your progress will be lost.')) {
+              if (window.confirm('Bỏ cuộc bây giờ là mất hết thành quả đó nha! Chắc chưa?')) {
                 navigate('/');
               }
             }}
@@ -147,7 +161,7 @@ const TakeQuiz: React.FC = () => {
           
           <div className="flex flex-col items-center flex-1">
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-              Question {currentQuestionIndex + 1} / {quiz.questions.length}
+              Câu số {currentQuestionIndex + 1} / {quiz.questions.length}
             </span>
             <div className="w-full max-w-xs h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-0.5">
               <div 
@@ -184,7 +198,7 @@ const TakeQuiz: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className={`grid gap-4 ${currentQuestion.question_type === 'TF' ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {currentQuestion.choices.map((choice: any, index: number) => {
               const isSelected = answers[currentQuestion.id] === choice.id;
               const labels = ['A', 'B', 'C', 'D'];
@@ -208,19 +222,23 @@ const TakeQuiz: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center space-x-6">
-                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg transition-colors ${
-                        isSelected ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-primary-100 group-hover:text-primary-500'
-                      }`}>
-                        {labels[index]}
-                      </div>
-                      <span className={`text-xl font-bold ${isSelected ? 'text-primary-900' : 'text-slate-600'}`}>
+                      {currentQuestion.question_type !== 'TF' && (
+                        <div className={`h-12 w-12 rounded-2xl flex items-center justify-center font-black text-lg transition-colors ${
+                          isSelected ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-primary-100 group-hover:text-primary-500'
+                        }`}>
+                          {labels[index]}
+                        </div>
+                      )}
+                      <span className={`text-xl font-bold ${isSelected ? 'text-primary-900' : 'text-slate-600'} ${currentQuestion.question_type === 'TF' ? 'w-full text-center' : ''}`}>
                         {choice.text}
                       </span>
                     </div>
-                    {isSelected ? (
-                      <CheckCircle2 className="h-8 w-8 text-primary-500 animate-in zoom-in-50 duration-300" />
-                    ) : (
-                      <Circle className="h-8 w-8 text-slate-100 group-hover:text-slate-200" />
+                    {currentQuestion.question_type !== 'TF' && (
+                      isSelected ? (
+                        <CheckCircle2 className="h-8 w-8 text-primary-500 animate-in zoom-in-50 duration-300" />
+                      ) : (
+                        <Circle className="h-8 w-8 text-slate-100 group-hover:text-slate-200" />
+                      )
                     )}
                   </label>
                 </div>
@@ -236,7 +254,7 @@ const TakeQuiz: React.FC = () => {
               isLoading={submitting}
               className="px-16 py-5 text-xl rounded-3xl"
             >
-              {currentQuestionIndex === quiz.questions.length - 1 ? 'Finish & See Result!' : 'Next Adventure'}
+              {currentQuestionIndex === quiz.questions.length - 1 ? 'Xong rồi! Xem kết quả ngay' : 'Tiến lên!'}
               <ChevronRight className="ml-2 h-6 w-6" />
             </Button>
           </div>

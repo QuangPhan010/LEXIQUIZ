@@ -174,9 +174,9 @@ const LiveDuel: React.FC = () => {
                 <Sword className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-lg font-black text-slate-900 leading-none mb-1">Live Duel</h1>
+                <h1 className="text-lg font-black text-slate-900 leading-none mb-1">Thi đấu Trực tiếp</h1>
                 <p className="text-slate-400 text-[10px] uppercase tracking-widest font-black">
-                  Question {currentQuestionIndex + 1} / {quiz.questions.length}
+                  Câu hỏi {currentQuestionIndex + 1} / {quiz.questions.length}
                 </p>
               </div>
             </div>
@@ -227,8 +227,8 @@ const LiveDuel: React.FC = () => {
                 <Sword className="h-8 w-8" />
               </div>
               <div>
-                <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Battle Room</h1>
-                <p className="text-slate-500 font-medium tracking-tight">Room: <span className="font-black text-primary-600 uppercase">{roomName}</span></p>
+                <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Phòng Quyết đấu</h1>
+                <p className="text-slate-500 font-medium tracking-tight">Phòng: <span className="font-black text-primary-600 uppercase">{roomName}</span></p>
               </div>
             </div>
 
@@ -238,8 +238,8 @@ const LiveDuel: React.FC = () => {
                   <div className="h-24 w-24 rounded-[2.5rem] bg-slate-50 flex items-center justify-center mx-auto mb-8 text-slate-300">
                     <Users className="h-12 w-12" />
                   </div>
-                  <h2 className="text-3xl font-black mb-4">Waiting for Opponents</h2>
-                  <p className="text-slate-500 mb-10 max-w-md mx-auto">Share the room name with your friends to start a live duel!</p>
+                  <h2 className="text-3xl font-black mb-4">Đang chờ đối thủ</h2>
+                  <p className="text-slate-500 mb-10 max-w-md mx-auto">Chia sẻ tên phòng với bạn bè để bắt đầu trận đấu trực tiếp!</p>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {Object.values(players).map(p => (
@@ -249,7 +249,7 @@ const LiveDuel: React.FC = () => {
                           <div className="absolute inset-0 bg-primary-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <p className="text-xs font-black text-slate-900">{p.username}</p>
-                        <span className="text-[10px] font-bold text-accent-emerald uppercase tracking-widest">Ready</span>
+                        <span className="text-[10px] font-bold text-accent-emerald uppercase tracking-widest">Sẵn sàng</span>
                       </div>
                     ))}
                   </div>
@@ -262,7 +262,7 @@ const LiveDuel: React.FC = () => {
                     onClick={() => startDuel(1)} // Hardcoded quiz ID for now, should be chosen in lobby
                   >
                     <Play className="h-6 w-6 mr-3 fill-current" />
-                    Commence Battle
+                    Khai chiến
                   </Button>
                 </div>
               </div>
@@ -271,8 +271,8 @@ const LiveDuel: React.FC = () => {
                 <div className="inline-flex p-6 rounded-[2.5rem] bg-accent-amber/10 text-accent-amber mb-8 shadow-sm">
                   <Trophy className="h-12 w-12" />
                 </div>
-                <h2 className="text-3xl font-black mb-1 text-slate-900">Battle Concluded!</h2>
-                <p className="text-slate-500 mb-10 text-sm font-medium">Final standings for the duel.</p>
+                <h2 className="text-3xl font-black mb-1 text-slate-900">Trận đấu kết thúc!</h2>
+                <p className="text-slate-500 mb-10 text-sm font-medium">Bảng xếp hạng chung cuộc.</p>
                 
                 <div className="space-y-3 max-w-sm mx-auto">
                   {Object.values(players).sort((a, b) => b.score - a.score).map((p, idx) => (
@@ -294,7 +294,7 @@ const LiveDuel: React.FC = () => {
                   className="mt-10 text-slate-400 hover:text-slate-900 font-bold"
                   onClick={() => navigate('/')}
                 >
-                  Return to Home
+                  Quay lại Trang chủ
                 </Button>
               </Card>
             )}
@@ -305,20 +305,20 @@ const LiveDuel: React.FC = () => {
             <Card className="p-8 border-0 shadow-xl bg-gradient-to-br from-primary-600 to-accent-violet text-white">
               <h3 className="text-xl font-black mb-6 flex items-center">
                 <Shield className="h-6 w-6 mr-3" />
-                Battle Rules
+                Quy tắc Quyết đấu
               </h3>
               <ul className="space-y-4 text-primary-100 font-medium">
                 <li className="flex items-start space-x-3">
                   <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
-                  <span>Answer questions as fast as you can.</span>
+                  <span>Trả lời câu hỏi càng nhanh càng tốt.</span>
                 </li>
                 <li className="flex items-start space-x-3">
                   <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
-                  <span>Each correct answer awards 10 points.</span>
+                  <span>Mỗi câu trả lời đúng được 10 điểm.</span>
                 </li>
                 <li className="flex items-start space-x-3">
                   <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
-                  <span>Real-time leaderboard syncs every answer.</span>
+                  <span>Bảng xếp hạng cập nhật thời gian thực sau mỗi câu trả lời.</span>
                 </li>
               </ul>
             </Card>
@@ -326,14 +326,14 @@ const LiveDuel: React.FC = () => {
             <Card className="p-8 border-0 shadow-xl h-[400px] flex flex-col">
               <h3 className="text-xl font-black mb-6 flex items-center text-slate-900">
                 <MessageSquare className="h-6 w-6 mr-3 text-primary-600" />
-                Battle Chat
+                Trò chuyện Quyết đấu
               </h3>
               <div className="flex-1 bg-slate-50 rounded-3xl p-6 mb-4 overflow-y-auto">
                 <p className="text-slate-400 text-center text-xs font-bold uppercase tracking-widest mt-20">System: Channel Open</p>
               </div>
               <div className="flex space-x-2">
                 <input 
-                  placeholder="Send a message..." 
+                  placeholder="Gửi tin nhắn..." 
                   className="flex-1 h-12 rounded-2xl px-6 bg-slate-50 border-0 text-sm font-medium"
                 />
                 <Button className="rounded-2xl h-12 w-12 p-0">

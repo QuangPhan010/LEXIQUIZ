@@ -23,6 +23,7 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     last_active = models.DateField(default=timezone.now)
     streak_count = models.IntegerField(default=0)
+    max_streak = models.IntegerField(default=0)
     coins = models.IntegerField(default=0)
 
     def __str__(self):
@@ -58,6 +59,8 @@ class Question(models.Model):
     QUESTION_TYPES = (
         ('MCQ', 'Multiple Choice'),
         ('TF', 'True/False'),
+        ('ORDER', 'Ordering'),
+        ('MATCH', 'Matching'),
     )
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField()
@@ -76,7 +79,9 @@ class Question(models.Model):
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     text = models.CharField(max_length=255)
+    match_text = models.CharField(max_length=255, blank=True, null=True) # For Matching questions
     is_correct = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0) # For Ordering questions
 
     def __str__(self):
         return self.text

@@ -118,14 +118,14 @@ const GameHost: React.FC = () => {
                   <Crown className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-black tracking-tight text-slate-900">Live Lobby</h1>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Game PIN: <span className="text-primary-600">{pin}</span></p>
+                  <h1 className="text-3xl font-black tracking-tight text-slate-900">Phòng chờ Trực tiếp</h1>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mã PIN phòng: <span className="text-primary-600">{pin}</span></p>
                 </div>
               </div>
 
               <Card className="p-8 border-slate-200 bg-white shadow-sm min-h-[400px]">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-black">Challengers</h2>
+                  <h2 className="text-xl font-black">Người thách đấu</h2>
                   <div className="flex items-center space-x-2 bg-slate-100 px-4 py-1.5 rounded-xl border border-slate-200">
                     <Users className="h-4 w-4 text-primary-500" />
                     <span className="text-sm font-black">{players.filter(p => !p.is_host).length}</span>
@@ -152,7 +152,7 @@ const GameHost: React.FC = () => {
                   
                   {players.filter(p => !p.is_host).length === 0 && (
                     <div className="col-span-full py-16 text-center">
-                      <p className="text-slate-400 font-black text-sm uppercase tracking-[0.3em] italic">Waiting for challengers...</p>
+                      <p className="text-slate-400 font-black text-sm uppercase tracking-[0.3em] italic">Đang chờ người thách đấu...</p>
                     </div>
                   )}
                 </div>
@@ -164,9 +164,9 @@ const GameHost: React.FC = () => {
                 <div className="h-12 w-12 rounded-2xl bg-primary-50 flex items-center justify-center mb-4 text-primary-600">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-black mb-2 text-slate-900">Host Dashboard</h3>
+                <h3 className="text-xl font-black mb-2 text-slate-900">Bảng điều khiển Chủ phòng</h3>
                 <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
-                  Ready to launch? Start the quiz once everyone has joined the lobby.
+                  Sẵn sàng chưa? Bắt đầu ngay khi mọi người đã vào phòng chờ.
                 </p>
                 <Button 
                   size="lg" 
@@ -175,23 +175,23 @@ const GameHost: React.FC = () => {
                   disabled={players.filter(p => !p.is_host).length === 0}
                 >
                   <Play className="h-5 w-5 mr-2 fill-current" />
-                  Start Battle
+                  Bắt đầu Trận đấu
                 </Button>
               </Card>
 
               <Card className="p-6 border-slate-200 bg-white rounded-[2rem] shadow-sm">
                 <h3 className="text-sm font-black mb-4 flex items-center text-slate-400 uppercase tracking-widest">
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Room Info
+                  Thông tin phòng
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600 font-bold">Auto-reveal</span>
-                    <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">Enabled</span>
+                    <span className="text-slate-600 font-bold">Tự động hiển thị</span>
+                    <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md text-[10px] font-black uppercase">Đã bật</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600 font-bold">Difficulty</span>
-                    <span className="text-slate-900 font-black">Standard</span>
+                    <span className="text-slate-600 font-bold">Độ khó</span>
+                    <span className="text-slate-900 font-black">Tiêu chuẩn</span>
                   </div>
                 </div>
               </Card>
@@ -209,7 +209,7 @@ const GameHost: React.FC = () => {
         <main className="max-w-4xl mx-auto pt-24 px-4 text-center">
           <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
             <div className="text-center md:text-left">
-              <p className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em] mb-1">Question {questionIndex + 1} / {totalQuestions}</p>
+              <p className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em] mb-1">Câu hỏi {questionIndex + 1} / {totalQuestions}</p>
               <h2 className="text-2xl font-black tracking-tight text-slate-900">{currentQuestion.text}</h2>
             </div>
             <div className="relative h-20 w-20 flex items-center justify-center shrink-0">
@@ -228,12 +228,12 @@ const GameHost: React.FC = () => {
               <div className="flex items-center justify-center space-x-8 mb-8">
                 <div className="text-center">
                   <p className="text-4xl font-black text-primary-600 mb-0.5">{answerCount.answered}</p>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responses</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Phản hồi</p>
                 </div>
                 <div className="h-10 w-px bg-slate-200" />
                 <div className="text-center">
                   <p className="text-4xl font-black text-slate-400 mb-0.5">{answerCount.total}</p>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Players</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Người chơi</p>
                 </div>
               </div>
 
@@ -243,7 +243,7 @@ const GameHost: React.FC = () => {
                   style={{ width: `${(answerCount.answered / (answerCount.total || 1)) * 100}%` }} 
                 />
               </div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Awaiting participants...</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đang chờ người tham gia...</p>
             </Card>
 
             {currentQuestion.image && (
@@ -266,8 +266,8 @@ const GameHost: React.FC = () => {
             <div className="inline-flex p-4 rounded-3xl bg-white shadow-xl shadow-slate-200/50 text-primary-600 mb-6">
               {gameState === 'finished' ? <Trophy className="h-10 w-10" /> : <Award className="h-10 w-10" />}
             </div>
-            <h1 className="text-3xl font-black tracking-tight mb-2">{gameState === 'finished' ? 'Final Standings' : 'Round Results'}</h1>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Room: {pin}</p>
+            <h1 className="text-3xl font-black tracking-tight mb-2">{gameState === 'finished' ? 'Bảng xếp hạng Chung cuộc' : 'Kết quả Vòng đấu'}</h1>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Phòng: {pin}</p>
           </div>
 
           <div className="space-y-3 mb-10">
@@ -304,7 +304,7 @@ const GameHost: React.FC = () => {
               className="w-full h-14 rounded-2xl text-lg font-black shadow-xl"
               onClick={() => navigate('/')}
             >
-              Back to Home
+              Quay lại Trang chủ
             </Button>
           )}
 
@@ -312,7 +312,7 @@ const GameHost: React.FC = () => {
             <div className="text-center p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm">
               <div className="flex items-center justify-center space-x-2 text-primary-600 font-black mb-1">
                 <ArrowRight className="h-4 w-4 animate-pulse" />
-                <span className="uppercase tracking-widest text-[10px]">Next Round Starting Soon</span>
+                <span className="uppercase tracking-widest text-[10px]">Vòng tiếp theo sắp bắt đầu</span>
               </div>
             </div>
           )}

@@ -9,13 +9,14 @@ import { Plus, Trash2, CheckCircle2, Circle, Save, FileText, HelpCircle, Layout,
 
 interface Choice {
   text: string;
+  match_text?: string;
   is_correct: boolean;
 }
 
 interface Question {
   text: string;
   choices: Choice[];
-  question_type: 'MCQ' | 'TF';
+  question_type: 'MCQ' | 'TF' | 'ORDER' | 'MATCH';
   time_limit_seconds: number;
   image_file?: File | null;
   image_preview?: string | null;
@@ -58,7 +59,7 @@ const CreateQuiz: React.FC = () => {
   // Format total seconds → human readable string
   const formatTimePreview = (digits: string): string => {
     const d = digits.replace(/\D/g, '');
-    if (!d || d === '0') return 'No limit';
+    if (!d || d === '0') return 'Không giới hạn';
     const totalSec = parseTimeInput(digits);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
@@ -78,10 +79,10 @@ const CreateQuiz: React.FC = () => {
     image_preview: null,
     video_url: '',
     choices: [
-      { text: '', is_correct: true },
-      { text: '', is_correct: false },
-      { text: '', is_correct: false },
-      { text: '', is_correct: false },
+      { text: '', is_correct: true, match_text: '' },
+      { text: '', is_correct: false, match_text: '' },
+      { text: '', is_correct: false, match_text: '' },
+      { text: '', is_correct: false, match_text: '' },
     ],
   });
 
@@ -132,10 +133,10 @@ const CreateQuiz: React.FC = () => {
           is_correct: c.is_correct
         }))
       })));
-      alert('Quiz generated successfully by AI!');
+      alert('Tạo Quiz thành công bằng AI!');
     } catch (err: any) {
       console.error('AI Import failed', err);
-      alert(err.response?.data?.error || 'Failed to generate quiz with AI. Please check your API Key.');
+      alert(err.response?.data?.error || 'Tạo Quiz bằng AI thất bại. Vui lòng kiểm tra API Key.');
     } finally {
       setAiLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -170,7 +171,7 @@ const CreateQuiz: React.FC = () => {
       });
 
       if (newQuestions.length === 0) {
-        alert('No questions found in the document.');
+        alert('Không tìm thấy câu hỏi nào trong tài liệu.');
         return;
       }
 
@@ -182,10 +183,10 @@ const CreateQuiz: React.FC = () => {
         return [...prev, ...newQuestions];
       });
 
-      alert(`Successfully imported ${newQuestions.length} questions!`);
+      alert(`Đã nhập thành công ${newQuestions.length} câu hỏi!`);
     } catch (err: any) {
       console.error('Doc Import failed', err);
-      alert(err.response?.data?.error || 'Failed to import questions from file.');
+      alert(err.response?.data?.error || 'Nhập câu hỏi từ tệp thất bại.');
     } finally {
       setImportLoading(false);
       if (docInputRef.current) docInputRef.current.value = '';
@@ -203,6 +204,22 @@ const CreateQuiz: React.FC = () => {
   const handleQuestionChange = (index: number, field: keyof Question, value: any) => {
     const newQuestions = [...questions];
     (newQuestions[index] as any)[field] = value;
+    
+    // Auto-adjust choices for TF
+    if (field === 'question_type' && value === 'TF') {
+      newQuestions[index].choices = [
+        { text: 'Đúng', is_correct: true, match_text: '' },
+        { text: 'Sai', is_correct: false, match_text: '' },
+      ];
+    } else if (field === 'question_type' && (value === 'MCQ' || value === 'ORDER' || value === 'MATCH') && newQuestions[index].choices.length !== 4) {
+      newQuestions[index].choices = [
+        { text: '', is_correct: true, match_text: '' },
+        { text: '', is_correct: false, match_text: '' },
+        { text: '', is_correct: false, match_text: '' },
+        { text: '', is_correct: false, match_text: '' },
+      ];
+    }
+    
     setQuestions(newQuestions);
   };
 
@@ -225,24 +242,31 @@ const CreateQuiz: React.FC = () => {
     setQuestions(newQuestions);
   };
 
-  const handleChoiceChange = (qIndex: number, cIndex: number, text: string) => {
+  const handleChoiceChange = (qIndex: number, cIndex: number, field: 'text' | 'match_text', value: string) => {
     const newQuestions = [...questions];
-    newQuestions[qIndex].choices[cIndex].text = text;
+    (newQuestions[qIndex].choices[cIndex] as any)[field] = value;
     setQuestions(newQuestions);
   };
 
   const handleCorrectChoice = (qIndex: number, cIndex: number) => {
     const newQuestions = [...questions];
-    newQuestions[qIndex].choices = newQuestions[qIndex].choices.map((c, i) => ({
-      ...c,
-      is_correct: i === cIndex,
-    }));
+    const qType = newQuestions[qIndex].question_type;
+    
+    if (qType === 'MCQ' || qType === 'TF') {
+      newQuestions[qIndex].choices = newQuestions[qIndex].choices.map((c, i) => ({
+        ...c,
+        is_correct: i === cIndex,
+      }));
+    } else {
+      // For ORDER/MATCH, maybe all are correct or correctness is handled differently
+      newQuestions[qIndex].choices[cIndex].is_correct = !newQuestions[qIndex].choices[cIndex].is_correct;
+    }
     setQuestions(newQuestions);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title) return alert('Please enter a title');
+    if (!title) return alert('Vui lòng nhập tiêu đề');
     setLoading(true);
     try {
       // First create the quiz with JSON (no images yet)
@@ -281,7 +305,7 @@ const CreateQuiz: React.FC = () => {
       navigate('/');
     } catch (err) {
       console.error('Failed to create quiz', err);
-      alert('Failed to create quiz. Please check your inputs.');
+      alert('Tạo Quiz thất bại. Vui lòng kiểm tra lại thông tin.');
     } finally {
       setLoading(false);
     }
@@ -297,7 +321,7 @@ const CreateQuiz: React.FC = () => {
             <div className="bg-primary-600 p-3 rounded-2xl shadow-lg shadow-primary-500/20">
               <Plus className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">Create New Quiz</h1>
+            <h1 className="text-4xl font-black tracking-tight text-slate-900">Tạo Quiz mới</h1>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -315,7 +339,7 @@ const CreateQuiz: React.FC = () => {
               className="border-dashed border-2 hover:bg-accent-violet/5 hover:border-accent-violet hover:text-accent-violet transition-all"
             >
               <Zap className={`h-5 w-5 mr-2 ${aiLoading ? 'animate-pulse' : 'text-accent-amber fill-accent-amber'}`} />
-              AI Import
+              Nhập bằng AI
             </Button>
 
             <input 
@@ -332,11 +356,7 @@ const CreateQuiz: React.FC = () => {
               className="border-dashed border-2 hover:bg-primary-50 hover:border-primary-500 hover:text-primary-600 transition-all"
             >
               <FileText className={`h-5 w-5 mr-2 ${importLoading ? 'animate-pulse' : 'text-primary-500'}`} />
-              Import Docs
-            </Button>
-            <Button onClick={handleSubmit} isLoading={loading} className="px-10 py-4 shadow-xl">
-              <Save className="h-5 w-5 mr-2" />
-              Save Quiz
+              Nhập từ tệp
             </Button>
           </div>
         </div>
@@ -345,21 +365,21 @@ const CreateQuiz: React.FC = () => {
           <Card className="border-t-4 border-t-accent-pink">
             <div className="flex items-center space-x-2 mb-6">
               <FileText className="h-5 w-5 text-accent-pink" />
-              <h2 className="text-xl font-black text-slate-800">Quiz Information</h2>
+              <h2 className="text-xl font-black text-slate-800">Thông tin Quiz</h2>
             </div>
             <div className="space-y-6">
               <Input
-                label="Quiz Title"
-                placeholder="Give it a catchy name!"
+                label="Tiêu đề Quiz"
+                placeholder="Đặt một cái tên thật kiêu!"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
               />
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700 ml-1">Description</label>
+                <label className="block text-sm font-bold text-slate-700 ml-1">Mô tả</label>
                 <textarea
                   className="w-full bg-white border-2 border-slate-200 rounded-3xl px-5 py-4 text-slate-900 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all duration-300 placeholder:text-slate-400 min-h-[120px]"
-                  placeholder="Tell learners what to expect..."
+                  placeholder="Mô tả cho người học biết họ sẽ học được gì..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -370,17 +390,17 @@ const CreateQuiz: React.FC = () => {
           <Card className="border-t-4 border-t-accent-violet">
             <div className="flex items-center space-x-2 mb-6">
               <Layout className="h-5 w-5 text-accent-violet" />
-              <h2 className="text-xl font-black text-slate-800">Settings & Organization</h2>
+              <h2 className="text-xl font-black text-slate-800">Cài đặt & Phân loại</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700 ml-1">Category</label>
+                <label className="block text-sm font-bold text-slate-700 ml-1">Danh mục</label>
                 <select 
                   className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 text-slate-900 focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all duration-300"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 >
-                  <option value="">Select a category</option>
+                  <option value="">Chọn danh mục</option>
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
@@ -390,12 +410,12 @@ const CreateQuiz: React.FC = () => {
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700 ml-1 flex items-center">
                   <Clock className="h-4 w-4 mr-1 text-slate-400" />
-                  Time Limit (Quiz total)
+                  Thời gian giới hạn (Tổng)
                 </label>
                 <Input
                   type="text"
                   inputMode="numeric"
-                  placeholder="0 = no limit  |  30 = 0:30  |  3000 = 30:00"
+                  placeholder="0 = không giới hạn  |  30 = 0:30  |  3000 = 30:00"
                   value={timeLimit === '0' ? '' : timeLimit}
                   onChange={(e) => setTimeLimit(e.target.value.replace(/\D/g, '') || '0')}
                 />
@@ -413,17 +433,17 @@ const CreateQuiz: React.FC = () => {
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700 ml-1 flex items-center">
                   <Hash className="h-4 w-4 mr-1 text-slate-400" />
-                  Tags
+                  Thẻ (Tags)
                 </label>
                 <Input
-                  placeholder="history, logic, science..."
+                  placeholder="lich su, logic, khoa hoc..."
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700 ml-1">Visibility</label>
+                <label className="block text-sm font-bold text-slate-700 ml-1">Chế độ hiển thị</label>
                 <div className="flex items-center space-x-4 p-2 bg-slate-50 rounded-2xl">
                   <button
                     type="button"
@@ -431,7 +451,7 @@ const CreateQuiz: React.FC = () => {
                     className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-xl transition-all ${isPublic ? 'bg-white shadow-sm text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     <Globe className="h-4 w-4" />
-                    <span className="text-sm font-bold">Public</span>
+                    <span className="text-sm font-bold">Công khai</span>
                   </button>
                   <button
                     type="button"
@@ -439,7 +459,7 @@ const CreateQuiz: React.FC = () => {
                     className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-xl transition-all ${!isPublic ? 'bg-white shadow-sm text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     <Lock className="h-4 w-4" />
-                    <span className="text-sm font-bold">Private</span>
+                    <span className="text-sm font-bold">Riêng tư</span>
                   </button>
                 </div>
               </div>
@@ -450,11 +470,11 @@ const CreateQuiz: React.FC = () => {
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center space-x-2">
                 <HelpCircle className="h-6 w-6 text-primary-500" />
-                <h2 className="text-2xl font-black text-slate-900">Questions</h2>
+                <h2 className="text-2xl font-black text-slate-900">Câu hỏi</h2>
               </div>
               <Button variant="outline" size="sm" onClick={handleAddQuestion} className="rounded-xl border-dashed">
                 <Plus className="h-4 w-4 mr-2" />
-                Add
+                Thêm
               </Button>
             </div>
 
@@ -474,15 +494,31 @@ const CreateQuiz: React.FC = () => {
 
                 <div className="space-y-6">
                   {/* Question header */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span className="inline-block px-4 py-1 bg-primary-100 text-primary-700 text-xs font-black uppercase tracking-widest rounded-full">
-                      Question {qIndex + 1}
+                      Câu hỏi {qIndex + 1}
                     </span>
+                    <div className="flex bg-slate-100 p-1 rounded-xl">
+                      {['MCQ', 'TF', 'ORDER', 'MATCH'].map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleQuestionChange(qIndex, 'question_type', type)}
+                          className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all ${
+                            q.question_type === type 
+                              ? 'bg-white shadow-sm text-primary-600' 
+                              : 'text-slate-400 hover:text-slate-600'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Question text */}
                   <Input
-                    placeholder="What is your question?"
+                    placeholder="Câu hỏi của bạn là gì?"
                     value={q.text}
                     onChange={(e) => handleQuestionChange(qIndex, 'text', e.target.value)}
                     className="text-xl font-bold bg-white"
@@ -495,7 +531,7 @@ const CreateQuiz: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-xs font-bold text-slate-600 flex items-center gap-1">
                         <Timer className="h-3.5 w-3.5 text-primary-500" />
-                        Question Timer
+                        Thời gian mỗi câu
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {TIMER_OPTIONS.map(t => (
@@ -519,7 +555,7 @@ const CreateQuiz: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-xs font-bold text-slate-600 flex items-center gap-1">
                         <Image className="h-3.5 w-3.5 text-accent-pink" />
-                        Image (optional)
+                        Hình ảnh (tùy chọn)
                       </label>
                       {q.image_preview ? (
                         <div className="relative w-full h-24 rounded-2xl overflow-hidden border-2 border-accent-pink/30">
@@ -535,7 +571,7 @@ const CreateQuiz: React.FC = () => {
                       ) : (
                         <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:border-accent-pink/50 hover:bg-accent-pink/5 transition-all">
                           <Image className="h-5 w-5 text-slate-300 mb-1" />
-                          <span className="text-xs text-slate-400">Upload image</span>
+                          <span className="text-xs text-slate-400">Tải ảnh lên</span>
                           <input
                             type="file"
                             className="hidden"
@@ -550,10 +586,10 @@ const CreateQuiz: React.FC = () => {
                     <div className="space-y-2">
                       <label className="block text-xs font-bold text-slate-600 flex items-center gap-1">
                         <Video className="h-3.5 w-3.5 text-accent-violet" />
-                        Video URL (optional)
+                        Link Video (tùy chọn)
                       </label>
                       <Input
-                        placeholder="YouTube or video URL..."
+                        placeholder="Link YouTube hoặc video..."
                         value={q.video_url}
                         onChange={(e) => handleQuestionChange(qIndex, 'video_url', e.target.value)}
                         className="text-sm"
@@ -563,24 +599,43 @@ const CreateQuiz: React.FC = () => {
 
                   {/* Choices */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {q.choices.map((choice, cIndex) => (
-                      <div key={cIndex} className="relative group">
-                        <Input
-                          placeholder={`Option ${String.fromCharCode(65 + cIndex)}`}
-                          value={choice.text}
-                          onChange={(e) => handleChoiceChange(qIndex, cIndex, e.target.value)}
-                          className={`pr-14 ${choice.is_correct ? 'border-accent-emerald bg-accent-emerald/5 ring-4 ring-accent-emerald/5' : 'bg-white'}`}
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleCorrectChoice(qIndex, cIndex)}
-                          className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 transform hover:scale-110 ${
-                            choice.is_correct ? 'text-accent-emerald' : 'text-slate-200 hover:text-slate-400'
-                          }`}
-                        >
-                          {choice.is_correct ? <CheckCircle2 className="h-7 w-7" /> : <Circle className="h-7 w-7" />}
-                        </button>
+                    {q.choices.slice(0, q.question_type === 'TF' ? 2 : q.choices.length).map((choice, cIndex) => (
+                      <div key={cIndex} className="space-y-2">
+                        <div className="relative group">
+                          <Input
+                            placeholder={
+                              q.question_type === 'ORDER' 
+                                ? `Trình tự ${cIndex + 1}` 
+                                : q.question_type === 'MATCH'
+                                  ? `Vế trái ${cIndex + 1}`
+                                  : `Lựa chọn ${String.fromCharCode(65 + cIndex)}`
+                            }
+                            value={choice.text}
+                            onChange={(e) => handleChoiceChange(qIndex, cIndex, 'text', e.target.value)}
+                            className={`pr-14 ${choice.is_correct ? 'border-accent-emerald bg-accent-emerald/5 ring-4 ring-accent-emerald/5' : 'bg-white'}`}
+                            required
+                          />
+                          {(q.question_type === 'MCQ' || q.question_type === 'TF') && (
+                            <button
+                              type="button"
+                              onClick={() => handleCorrectChoice(qIndex, cIndex)}
+                              className={`absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300 transform hover:scale-110 ${
+                                choice.is_correct ? 'text-accent-emerald' : 'text-slate-200 hover:text-slate-400'
+                              }`}
+                            >
+                              {choice.is_correct ? <CheckCircle2 className="h-7 w-7" /> : <Circle className="h-7 w-7" />}
+                            </button>
+                          )}
+                        </div>
+                        {q.question_type === 'MATCH' && (
+                          <Input
+                            placeholder={`Vế phải tương ứng ${cIndex + 1}`}
+                            value={choice.match_text || ''}
+                            onChange={(e) => handleChoiceChange(qIndex, cIndex, 'match_text', e.target.value)}
+                            className="bg-slate-50 text-sm italic"
+                            required
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -592,11 +647,24 @@ const CreateQuiz: React.FC = () => {
           <div className="flex justify-center pt-8">
             <Button variant="outline" size="lg" onClick={handleAddQuestion} className="w-full max-w-sm border-dashed border-2 py-6 text-xl rounded-3xl border-primary-200 text-primary-600 hover:bg-primary-50">
               <Plus className="h-6 w-6 mr-3" />
-              Add Question
+              Thêm câu hỏi
             </Button>
           </div>
         </div>
       </main>
+
+      {/* Fixed Save Button at Bottom Right */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <Button 
+          onClick={handleSubmit} 
+          isLoading={loading} 
+          size="lg"
+          className="px-10 py-6 h-auto text-xl rounded-3xl shadow-2xl shadow-primary-500/40 transform hover:scale-110 active:scale-95 transition-all duration-300"
+        >
+          <Save className="h-6 w-6 mr-3" />
+          Lưu Quiz ngay!
+        </Button>
+      </div>
     </div>
   );
 };

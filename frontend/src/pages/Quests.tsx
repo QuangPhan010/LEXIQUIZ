@@ -78,13 +78,13 @@ const Quests: React.FC = () => {
             <div className="text-center md:text-left">
               <div className="inline-flex items-center space-x-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-2xl mb-6 font-black text-xs uppercase tracking-widest animate-bounce">
                 <Sparkles className="h-4 w-4" />
-                <span>Daily Rewards Available</span>
+                <span>Phần thưởng hàng ngày đang chờ</span>
               </div>
               <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">
-                Heroic <span className="text-primary-600">Quests</span>
+                Nhiệm vụ <span className="text-primary-600">Anh hùng</span>
               </h1>
               <p className="text-xl text-slate-500 max-w-lg font-medium leading-relaxed">
-                Complete your daily objectives to earn massive XP, Coins, and exclusive rewards. New quests drop every 24 hours!
+                Hoàn thành các mục tiêu hàng ngày để nhận lượng lớn XP, Xu và phần thưởng độc quyền. Nhiệm vụ mới xuất hiện mỗi 24 giờ!
               </p>
             </div>
             
@@ -94,14 +94,14 @@ const Quests: React.FC = () => {
                   <Coins className="h-6 w-6" />
                 </div>
                 <p className="text-2xl font-black text-slate-900">100%</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bonus Rate</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tỉ lệ thưởng</p>
               </Card>
               <Card className="p-8 border-0 bg-white/80 shadow-xl text-center flex flex-col items-center">
                 <div className="h-12 w-12 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-500 mb-4">
                   <Timer className="h-6 w-6" />
                 </div>
                 <p className="text-2xl font-black text-slate-900">24h</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reset Time</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thời gian làm mới</p>
               </Card>
             </div>
           </div>
@@ -114,10 +114,10 @@ const Quests: React.FC = () => {
               <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
                 <Target className="h-5 w-5" />
               </div>
-              <h2 className="text-2xl font-black text-slate-900">Today's Objectives</h2>
+              <h2 className="text-2xl font-black text-slate-900">Mục tiêu hôm nay</h2>
             </div>
             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">
-              {userQuests.filter(q => q.is_completed).length} / {userQuests.length} Completed
+              Đã xong {userQuests.filter(q => q.is_completed).length} / {userQuests.length}
             </p>
           </div>
 
@@ -131,7 +131,7 @@ const Quests: React.FC = () => {
                   {uq.is_claimed && (
                     <div className="absolute inset-0 bg-accent-emerald/5 backdrop-blur-[1px] z-20 flex items-center justify-center pointer-events-none">
                       <div className="rotate-[-12deg] border-4 border-accent-emerald text-accent-emerald px-6 py-2 rounded-2xl font-black text-2xl uppercase tracking-widest">
-                        Claimed
+                        Đã nhận
                       </div>
                     </div>
                   )}
@@ -159,7 +159,7 @@ const Quests: React.FC = () => {
                     <div className="space-y-4 mb-8">
                       <div className="flex justify-between items-end">
                         <div className="space-y-1">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiến độ</p>
                           <p className="text-lg font-black text-slate-900">
                             {uq.progress} <span className="text-slate-300 font-bold">/ {uq.quest.requirement_value}</span>
                           </p>
@@ -203,7 +203,7 @@ const Quests: React.FC = () => {
                         : 'bg-slate-900 text-white hover:bg-slate-800'
                       }`}
                     >
-                      {uq.is_claimed ? 'Done' : uq.is_completed ? 'Claim!' : 'In Progress'}
+                      {uq.is_claimed ? 'Xong' : uq.is_completed ? 'Nhận ngay!' : 'Đang làm'}
                     </Button>
                   </div>
                 </Card>
@@ -214,8 +214,8 @@ const Quests: React.FC = () => {
               <div className="h-24 w-24 rounded-3xl bg-slate-50 flex items-center justify-center mx-auto mb-8 text-slate-200">
                 <Compass className="h-12 w-12" />
               </div>
-              <h3 className="text-2xl font-black text-slate-400 mb-2">No Quests Today</h3>
-              <p className="text-slate-400">Wait for the next reset to embark on new adventures!</p>
+              <h3 className="text-2xl font-black text-slate-400 mb-2">Không có nhiệm vụ nào hôm nay</h3>
+              <p className="text-slate-400">Hãy đợi lần làm mới tiếp theo để bắt đầu những cuộc phiêu lưu mới!</p>
             </div>
           )}
         </div>

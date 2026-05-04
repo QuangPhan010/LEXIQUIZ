@@ -12,7 +12,9 @@ import {
   Zap, 
   Calendar,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Flame,
+  Trophy
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -50,18 +52,18 @@ const Dashboard: React.FC = () => {
             <Activity className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Performance Dashboard</h1>
-            <p className="text-slate-500 font-medium tracking-tight">Analytics and insights into your learning journey.</p>
+            <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Bảng điều khiển kết quả</h1>
+            <p className="text-slate-500 font-medium tracking-tight">Phân tích và thông tin chuyên sâu về hành trình học tập của bạn.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
             <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-6">
               <Zap className="h-6 w-6" />
             </div>
             <p className="text-4xl font-black text-slate-900 mb-1">{stats?.results_taken || 0}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Quizzes Solved</p>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Bộ câu hỏi đã giải</p>
           </Card>
 
           <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
@@ -69,7 +71,7 @@ const Dashboard: React.FC = () => {
               <Target className="h-6 w-6" />
             </div>
             <p className="text-4xl font-black text-slate-900 mb-1">{stats?.avg_score || 0}%</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Avg. Accuracy</p>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Độ chính xác TB</p>
           </Card>
 
           <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
@@ -77,15 +79,23 @@ const Dashboard: React.FC = () => {
               <TrendingUp className="h-6 w-6" />
             </div>
             <p className="text-4xl font-black text-slate-900 mb-1">{user?.level}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Mastery Level</p>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Cấp độ thông thạo</p>
           </Card>
 
           <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
-            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-6">
-              <Calendar className="h-6 w-6" />
+            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-6 ${user?.is_streak_active ? 'bg-orange-50 text-orange-500' : 'bg-slate-50 text-slate-300'}`}>
+              <Flame className={`h-6 w-6 ${user?.is_streak_active ? 'fill-orange-500' : ''}`} />
             </div>
-            <p className="text-4xl font-black text-slate-900 mb-1">{user?.streak_count || 0}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Day Streak</p>
+            <p className={`text-4xl font-black mb-1 ${user?.is_streak_active ? 'text-slate-900' : 'text-slate-400'}`}>{user?.streak_count || 0}</p>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Chuỗi hiện tại</p>
+          </Card>
+
+          <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
+            <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-6">
+              <Trophy className="h-6 w-6" />
+            </div>
+            <p className="text-4xl font-black text-slate-900 mb-1">{user?.max_streak || 0}</p>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Chuỗi cao nhất</p>
           </Card>
         </div>
 
@@ -94,7 +104,7 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-10">
               <h3 className="text-xl font-black text-slate-900 flex items-center">
                 <PieChart className="h-6 w-6 mr-3 text-primary-600" />
-                Category Distribution
+                Phân bổ danh mục
               </h3>
             </div>
             
@@ -103,8 +113,8 @@ const Dashboard: React.FC = () => {
                 stats.category_stats.map((cat: any) => (
                   <div key={cat.quiz__category__name}>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="font-black text-slate-700">{cat.quiz__category__name || 'General'}</span>
-                      <span className="text-xs font-bold text-slate-400 uppercase">{cat.count} Quizzes</span>
+                      <span className="font-black text-slate-700">{cat.quiz__category__name || 'Chung'}</span>
+                      <span className="text-xs font-bold text-slate-400 uppercase">{cat.count} Quiz</span>
                     </div>
                     <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden p-0.5">
                       <div 
@@ -116,7 +126,7 @@ const Dashboard: React.FC = () => {
                 ))
               ) : (
                 <div className="text-center py-10 text-slate-400 font-medium italic">
-                  Complete more quizzes to see your distribution!
+                  Hoàn thành thêm quiz để xem biểu đồ phân bổ!
                 </div>
               )}
             </div>
@@ -126,7 +136,7 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-10">
               <h3 className="text-xl font-black text-slate-900 flex items-center">
                 <BarChart3 className="h-6 w-6 mr-3 text-accent-emerald" />
-                Badges Progress
+                Tiến trình huy hiệu
               </h3>
               <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                 {stats?.badges.filter((b: any) => b.earned).length} / {stats?.badges.length}
@@ -145,16 +155,16 @@ const Dashboard: React.FC = () => {
             </div>
             
             <div className="mt-10 pt-10 border-t border-slate-100">
-              <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Recent Activity</h4>
+              <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Hoạt động gần đây</h4>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                   <div className="flex items-center space-x-3">
                     <div className="h-8 w-8 rounded-xl bg-white flex items-center justify-center text-primary-600 shadow-sm">
                       <Zap className="h-4 w-4" />
                     </div>
-                    <span className="text-sm font-bold text-slate-700">Quiz Completed</span>
+                    <span className="text-sm font-bold text-slate-700">Đã hoàn thành Quiz</span>
                   </div>
-                  <span className="text-[10px] font-black text-slate-400">TODAY</span>
+                  <span className="text-[10px] font-black text-slate-400">HÔM NAY</span>
                 </div>
                 {/* Add more activity items here */}
               </div>

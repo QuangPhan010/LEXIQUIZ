@@ -63,7 +63,7 @@ const QuizDetail: React.FC = () => {
       setQuiz({ ...quiz, is_public: response.data.is_public });
     } catch (err) {
       console.error('Failed to update quiz status', err);
-      alert('Failed to update status. Please try again.');
+      alert('Cập nhật trạng thái thất bại. Vui lòng thử lại.');
     } finally {
       setIsUpdating(false);
     }
@@ -71,7 +71,7 @@ const QuizDetail: React.FC = () => {
 
   const handleDelete = async () => {
     if (!quiz) return;
-    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa bộ câu hỏi này không? Hành động này không thể hoàn tác.')) return;
     
     setIsDeleting(true);
     try {
@@ -79,7 +79,7 @@ const QuizDetail: React.FC = () => {
       navigate('/');
     } catch (err) {
       console.error('Failed to delete quiz', err);
-      alert('Failed to delete quiz. Please try again.');
+      alert('Xóa bộ câu hỏi thất bại. Vui lòng thử lại.');
     } finally {
       setIsDeleting(false);
     }
@@ -132,7 +132,7 @@ const QuizDetail: React.FC = () => {
       setShowHostModal(true);
     } catch (err) {
       console.error('Failed to create room', err);
-      alert('Failed to create live room. Only the creator can host.');
+      alert('Tạo phòng thi đấu thất bại. Chỉ người tạo mới có thể tổ chức.');
     } finally {
       setIsCreatingRoom(false);
     }
@@ -161,7 +161,7 @@ const QuizDetail: React.FC = () => {
       <main className="max-w-4xl mx-auto px-4 pt-32 pb-12">
         <Link to="/" className="inline-flex items-center text-slate-400 hover:text-primary-600 font-bold mb-10 transition-colors group">
           <ChevronLeft className="h-5 w-5 mr-1 group-hover:-translate-x-1 transition-transform" />
-          Back to Explorations
+          Quay lại Khám phá
         </Link>
 
         <Card className="mb-10 relative overflow-hidden border-t-8 border-t-primary-600">
@@ -172,7 +172,7 @@ const QuizDetail: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
             <div className="max-w-xl">
               <span className="inline-block px-4 py-1 bg-primary-100 text-primary-700 text-xs font-black uppercase tracking-widest rounded-full mb-6">
-                Adventure awaits
+                Cuộc phiêu lưu đang chờ
               </span>
               <h1 className="text-4xl font-black mb-6 text-slate-900 tracking-tight leading-tight">{quiz.title}</h1>
               <div className="flex items-center space-x-4 mb-6">
@@ -191,7 +191,7 @@ const QuizDetail: React.FC = () => {
                 <div className="h-4 w-px bg-slate-200" />
                 <span className="text-slate-400 font-bold text-sm uppercase tracking-widest">{quiz.category_name}</span>
               </div>
-              <p className="text-slate-500 text-xl font-medium leading-relaxed">{quiz.description || 'No description provided, but we know you can handle this! Get ready to test your knowledge.'}</p>
+              <p className="text-slate-500 text-xl font-medium leading-relaxed">{quiz.description || 'Người này có vẻ lười, không có ghi mô tả gì hết.'}</p>
             </div>
             <div className="shrink-0 flex flex-col gap-4">
               <Button 
@@ -200,7 +200,7 @@ const QuizDetail: React.FC = () => {
                 className="w-full md:w-auto px-12 py-6 text-xl rounded-3xl shadow-2xl"
               >
                 <Play className="h-6 w-6 mr-3 fill-current" />
-                Start Quiz
+                Bắt đầu
               </Button>
 
               {user && quiz.creator === user.id && (
@@ -211,8 +211,7 @@ const QuizDetail: React.FC = () => {
                   isLoading={isCreatingRoom}
                   className="w-full md:w-auto px-12 py-6 text-xl rounded-3xl border-2 border-primary-600 text-primary-600 hover:bg-primary-50"
                 >
-                  <Share2 className="h-6 w-6 mr-3" />
-                  Host Live
+                  <Share2 className="h-6 w-6 mr-3" />Tạo phòng
                 </Button>
               )}
             </div>
@@ -225,47 +224,47 @@ const QuizDetail: React.FC = () => {
               <HelpCircle className="h-8 w-8" />
             </div>
             <h3 className="text-3xl font-black text-slate-900 mb-2">{quiz.questions.length}</h3>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Questions</p>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Câu hỏi</p>
           </Card>
 
           <Card className="flex flex-col items-center text-center p-10 hover:border-accent-emerald/20 transition-colors">
             <div className="p-4 rounded-3xl bg-accent-emerald/10 text-accent-emerald mb-6 shadow-sm">
               <BarChart className="h-8 w-8" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 mb-2">Unlimited</h3>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Retries</p>
+            <h3 className="text-3xl font-black text-slate-900 mb-2">Không giới hạn</h3>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Lượt làm lại</p>
           </Card>
 
           <Card className="flex flex-col items-center text-center p-10 hover:border-accent-amber/20 transition-colors">
             <div className="p-4 rounded-3xl bg-accent-amber/10 text-accent-amber mb-6 shadow-sm">
               <Info className="h-8 w-8" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 mb-2">Instant</h3>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Feedback</p>
+            <h3 className="text-3xl font-black text-slate-900 mb-2">Tức thì</h3>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Phản hồi</p>
           </Card>
         </div>
 
         <div className="mt-16 bg-white rounded-3xl p-10 border border-slate-100 shadow-sm">
           <h2 className="text-2xl font-black mb-8 flex items-center text-slate-900">
             <Info className="h-6 w-6 mr-3 text-primary-500" />
-            Rules of the Game
+            Quy tắc trò chơi
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-slate-500 font-medium">
             <div className="flex items-start space-x-4">
               <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-400 font-bold">1</div>
-              <p>Read each question carefully. Precision is key to high scores!</p>
+              <p>Đọc kỹ từng câu hỏi. Sự chính xác là chìa khóa để đạt điểm cao!</p>
             </div>
             <div className="flex items-start space-x-4">
               <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-400 font-bold">2</div>
-              <p>Trust your instincts. Your first choice is often the right one.</p>
+              <p>Tin vào bản năng của bạn. Lựa chọn đầu tiên thường là đúng nhất.</p>
             </div>
             <div className="flex items-start space-x-4">
               <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-400 font-bold">3</div>
-              <p>Finish in one sitting. Stay focused and win the trophy!</p>
+              <p>Hoàn thành trong một lần làm. Hãy tập trung và giành lấy cúp vô địch!</p>
             </div>
             <div className="flex items-start space-x-4">
               <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-400 font-bold">4</div>
-              <p>Have fun! This is about learning and growing your brain.</p>
+              <p>Chúc bạn vui vẻ! Đây là để học tập và phát triển trí tuệ.</p>
             </div>
           </div>
         </div>
@@ -275,7 +274,7 @@ const QuizDetail: React.FC = () => {
           <div className="mt-12 bg-white rounded-3xl p-10 border-2 border-dashed border-slate-200">
             <h2 className="text-2xl font-black mb-8 flex items-center text-slate-900">
               <Settings className="h-6 w-6 mr-3 text-primary-500" />
-              Creator Controls
+              Điều khiển của người tạo
             </h2>
             <div className="flex flex-wrap gap-4">
               <Button 
@@ -287,12 +286,12 @@ const QuizDetail: React.FC = () => {
                 {quiz.is_public ? (
                   <>
                     <Lock className="h-5 w-5 mr-2" />
-                    Make Private
+                    Chuyển sang Riêng tư
                   </>
                 ) : (
                   <>
                     <Globe className="h-5 w-5 mr-2" />
-                    Make Public
+                    Chuyển sang Công khai
                   </>
                 )}
               </Button>
@@ -303,20 +302,20 @@ const QuizDetail: React.FC = () => {
                 className="flex-1 md:flex-none"
               >
                 <Trash2 className="h-5 w-5 mr-2" />
-                Delete Quiz
+                Xóa Quiz
               </Button>
             </div>
             <p className="mt-6 text-sm text-slate-400 font-medium italic">
               {quiz.is_public 
-                ? "This quiz is currently public and visible to everyone." 
-                : "This quiz is currently private and only you can see it."}
+                ? "Quiz này hiện đang công khai và mọi người đều có thể thấy." 
+                : "Quiz này hiện đang riêng tư và chỉ bạn mới có thể thấy."}
             </p>
           </div>
         )}
 
         {/* Comments Section */}
         <div className="mt-16">
-          <h2 className="text-3xl font-black mb-10 text-slate-900 tracking-tight">Discussion</h2>
+          <h2 className="text-3xl font-black mb-10 text-slate-900 tracking-tight">Thảo luận</h2>
           
           {user && (
             <Card className="mb-10 p-6 border-0 shadow-xl bg-slate-50">
@@ -324,7 +323,7 @@ const QuizDetail: React.FC = () => {
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Share your thoughts on this quiz..."
+                  placeholder="Chia sẻ suy nghĩ của bạn về bộ câu hỏi này..."
                   className="w-full h-32 rounded-3xl p-6 bg-white border-0 shadow-inner focus:ring-4 focus:ring-primary-500/10 transition-all resize-none text-slate-700 font-medium"
                 />
                 <div className="flex justify-end">
@@ -333,7 +332,7 @@ const QuizDetail: React.FC = () => {
                     disabled={submittingComment || !newComment.trim()}
                     className="rounded-2xl px-8 h-12 font-bold"
                   >
-                    Post Comment
+                    Đăng bình luận
                   </Button>
                 </div>
               </form>
@@ -368,7 +367,7 @@ const QuizDetail: React.FC = () => {
             ) : (
               <div className="text-center py-20 bg-white/50 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200">
                 <HelpCircle className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-                <p className="text-slate-400 font-bold">No comments yet. Be the first to start the discussion!</p>
+                <p className="text-slate-400 font-bold">Chưa có bình luận nào. Hãy là người đầu tiên bắt đầu cuộc thảo luận!</p>
               </div>
             )}
           </div>
@@ -389,8 +388,8 @@ const QuizDetail: React.FC = () => {
                 <div className="inline-flex p-3 rounded-2xl bg-primary-50 text-primary-600 mb-4">
                   <Share2 className="h-6 w-6" />
                 </div>
-                <h2 className="text-2xl font-black mb-1 text-slate-900 tracking-tight">Host Session</h2>
-                <p className="text-slate-500 mb-6 text-sm font-medium">Ready to start the battle?</p>
+                <h2 className="text-2xl font-black mb-1 text-slate-900 tracking-tight">Mở phòng thách đấu</h2>
+                <p className="text-slate-500 mb-6 text-sm font-medium">Anh em đã sẵn sàng chưa?</p>
 
                 <div className="bg-slate-50 p-6 rounded-[2rem] mb-6 flex flex-col items-center border border-slate-100">
                   <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-slate-100">
@@ -413,7 +412,7 @@ const QuizDetail: React.FC = () => {
                     className="w-full h-14 text-lg rounded-2xl shadow-md"
                     onClick={() => navigate(`/host/${roomPin}`)}
                   >
-                    Enter Lobby
+                    Vào sảnh chờ
                   </Button>
                   <Button 
                     variant="outline"
@@ -421,7 +420,7 @@ const QuizDetail: React.FC = () => {
                     onClick={copyJoinLink}
                   >
                     {copied ? <CheckCircle2 className="h-4 w-4 mr-2 text-accent-emerald" /> : <Copy className="h-4 w-4 mr-2 text-slate-400" />}
-                    {copied ? 'Link Copied!' : 'Copy Join Link'}
+                    {copied ? 'Đã lấy link thành công!' : 'Lấy link rủ bạn bè'}
                   </Button>
                 </div>
               </div>

@@ -11,6 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
     xp = serializers.ReadOnlyField(source='profile.xp')
     level = serializers.ReadOnlyField(source='profile.level')
     streak_count = serializers.ReadOnlyField(source='profile.streak_count')
+    max_streak = serializers.ReadOnlyField(source='profile.max_streak')
     coins = serializers.ReadOnlyField(source='profile.coins')
     avatar = serializers.SerializerMethodField()
     is_streak_active = serializers.SerializerMethodField()
@@ -19,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'coins', 'is_streak_active', 'equipped_frame')
+        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'max_streak', 'coins', 'is_streak_active', 'equipped_frame')
 
     def get_equipped_frame(self, obj):
         inventory = UserInventory.objects.filter(user=obj, item__item_type='FRAME', is_equipped=True).first()
@@ -64,7 +65,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
-        fields = ('id', 'text', 'is_correct')
+        fields = ('id', 'text', 'match_text', 'is_correct', 'order')
 
 class QuestionSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True)

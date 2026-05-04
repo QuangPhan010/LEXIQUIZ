@@ -51,8 +51,8 @@ const Leaderboard: React.FC = () => {
           <div className="inline-flex p-4 bg-white rounded-3xl shadow-lg shadow-slate-200/50 mb-6 animate-bounce">
             <Trophy className="h-10 w-10 text-accent-amber" />
           </div>
-          <h1 className="text-5xl font-black tracking-tight mb-4 text-slate-900">Global Champions</h1>
-          <p className="text-xl text-slate-500">The brightest minds in the LEXIQUIZ universe.</p>
+          <h1 className="text-5xl font-black tracking-tight mb-4 text-slate-900">Bảng xếp hạng toàn cầu</h1>
+          <p className="text-xl text-slate-500">Những bộ óc sáng giá nhất trong vũ trụ LEXIQUIZ.</p>
         </div>
 
         {/* Podium for Top 3 */}
@@ -66,7 +66,7 @@ const Leaderboard: React.FC = () => {
                 </div>
                 <UserAvatar user={top3[1]} size="lg" className="mx-auto mb-4" />
                 <h3 className="text-xl font-black text-slate-800">{top3[1].username}</h3>
-                <p className="text-slate-400 font-bold text-sm mb-4">Level {top3[1].level}</p>
+                <p className="text-slate-400 font-bold text-sm mb-4">Cấp {top3[1].level}</p>
                 <div className="inline-flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-xl text-slate-600 font-black">
                   <Zap className="h-4 w-4 text-accent-amber fill-accent-amber" />
                   <span>{top3[1].xp} XP</span>
@@ -84,7 +84,7 @@ const Leaderboard: React.FC = () => {
                 </div>
                 <UserAvatar user={top3[0]} size="xl" className="mx-auto mb-4" />
                 <h3 className="text-2xl font-black text-slate-900">{top3[0].username}</h3>
-                <p className="text-primary-500 font-black text-base mb-6">Level {top3[0].level}</p>
+                <p className="text-primary-500 font-black text-base mb-6">Cấp {top3[0].level}</p>
                 <div className="inline-flex items-center space-x-2 bg-accent-amber/20 px-6 py-3 rounded-2xl text-accent-amber font-black text-lg">
                   <Zap className="h-5 w-5 fill-accent-amber" />
                   <span>{top3[0].xp} XP</span>
@@ -102,7 +102,7 @@ const Leaderboard: React.FC = () => {
                 </div>
                 <UserAvatar user={top3[2]} size="lg" className="mx-auto mb-4" />
                 <h3 className="text-xl font-black text-slate-800">{top3[2].username}</h3>
-                <p className="text-slate-400 font-bold text-sm mb-4">Level {top3[2].level}</p>
+                <p className="text-slate-400 font-bold text-sm mb-4">Cấp {top3[2].level}</p>
                 <div className="inline-flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-xl text-slate-600 font-black">
                   <Zap className="h-4 w-4 text-accent-amber fill-accent-amber" />
                   <span>{top3[2].xp} XP</span>
@@ -115,10 +115,10 @@ const Leaderboard: React.FC = () => {
         {/* Rest of the leaderboard */}
         <Card className="p-0 overflow-hidden border-0 shadow-xl">
           <div className="bg-slate-50/50 px-8 py-4 border-b border-slate-100 grid grid-cols-12 gap-4 text-xs font-black text-slate-400 uppercase tracking-widest">
-            <div className="col-span-1">Rank</div>
-            <div className="col-span-7">User</div>
-            <div className="col-span-2 text-center">Level</div>
-            <div className="col-span-2 text-right">Experience</div>
+            <div className="col-span-1">Hạng</div>
+            <div className="col-span-7">Người chơi</div>
+            <div className="col-span-2 text-center">Cấp</div>
+            <div className="col-span-2 text-right">Kinh nghiệm</div>
           </div>
           <div className="divide-y divide-slate-50">
             {rest.map((entry, index) => (
@@ -129,7 +129,7 @@ const Leaderboard: React.FC = () => {
                   <span className="font-bold text-slate-800 text-lg">{entry.username}</span>
                 </div>
                 <div className="col-span-2 text-center font-black text-primary-600">
-                  Lvl {entry.level}
+                  Cấp {entry.level}
                 </div>
                 <div className="col-span-2 text-right">
                   <div className="inline-flex items-center space-x-1.5 font-black text-slate-900">

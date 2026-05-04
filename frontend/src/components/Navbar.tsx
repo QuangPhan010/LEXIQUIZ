@@ -33,37 +33,37 @@ export const Navbar: React.FC = () => {
                 <Link to="/create-quiz" className="hidden sm:block">
                   <Button variant="accent" size="sm">
                     <PlusCircle className="h-4 w-4 mr-2" />
-                    Create
+                    Tạo mới
                   </Button>
                 </Link>
                 <Link to="/dashboard" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <Layout className="h-4 w-4 mr-2" />
-                    Dashboard
+                    Bảng điều khiển
                   </Button>
                 </Link>
                 <Link to="/quests" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <Target className="h-4 w-4 mr-2" />
-                    Quests
+                    Nhiệm vụ
                   </Button>
                 </Link>
                 <Link to="/leaderboard" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <Trophy className="h-4 w-4 mr-2" />
-                    Leaderboard
+                    Xếp hạng
                   </Button>
                 </Link>
                 <Link to="/shop" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <ShoppingBag className="h-4 w-4 mr-2" />
-                    Shop
+                    Cửa hàng
                   </Button>
                 </Link>
                 <Link to="/history" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
                     <History className="h-4 w-4 mr-2" />
-                    History
+                    Lịch sử
                   </Button>
                 </Link>
                   <Link to="/profile" className="flex items-center space-x-2 pl-4 border-l border-slate-100">
@@ -71,10 +71,10 @@ export const Navbar: React.FC = () => {
                       <div className="flex items-center justify-end space-x-1">
                         <Flame className={`h-3 w-3 ${user.is_streak_active ? 'text-orange-500 fill-orange-500' : 'text-slate-300 fill-slate-300'}`} />
                         <p className={`text-[10px] font-bold uppercase tracking-widest ${user.is_streak_active ? 'text-orange-600' : 'text-slate-400'}`}>
-                          {user.streak_count || 0} Streak
+                          Chuỗi {user.streak_count || 0}
                         </p>
                       </div>
-                      <p className="text-sm font-black text-slate-900">Level {user.level || 1} • {user.xp} XP</p>
+                      <p className="text-sm font-black text-slate-900">Cấp {user.level || 1} • {user.xp} XP</p>
                     </div>
                     <UserAvatar user={user} size="md" className="group-hover/avatar:scale-105 transition-transform" />
                   </Link>
@@ -85,10 +85,10 @@ export const Navbar: React.FC = () => {
             ) : (
               <div className="flex items-center space-x-2">
                 <Link to="/login">
-                  <Button variant="ghost" size="sm">Login</Button>
+                  <Button variant="ghost" size="sm">Đăng nhập</Button>
                 </Link>
                 <Link to="/register">
-                  <Button size="sm">Sign Up</Button>
+                  <Button size="sm">Đăng ký</Button>
                 </Link>
               </div>
             )}

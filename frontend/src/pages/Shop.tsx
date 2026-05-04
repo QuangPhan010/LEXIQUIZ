@@ -92,7 +92,7 @@ const Shop: React.FC = () => {
             </div>
             <div>
               <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">LexiShop</h1>
-              <p className="text-slate-500 font-medium">Unlock exclusive customization items for your profile.</p>
+              <p className="text-slate-500 font-medium">Sắm ngay vật phẩm 'xịn xò' để nâng tầm hồ sơ của bạn!</p>
             </div>
           </div>
           
@@ -101,8 +101,8 @@ const Shop: React.FC = () => {
               <Coins className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Balance</p>
-              <p className="text-2xl font-black text-slate-900">{user?.coins || 0} Coins</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Ví tiền</p>
+              <p className="text-2xl font-black text-slate-900">{user?.coins || 0} Xu</p>
             </div>
           </div>
         </div>
@@ -159,7 +159,7 @@ const Shop: React.FC = () => {
                       {owned ? (
                         <div className="flex items-center space-x-2 text-accent-emerald font-black">
                           <CheckCircle2 className="h-5 w-5" />
-                          <span>Owned</span>
+                          <span>Đã vào kho</span>
                         </div>
                       ) : (
                         <Button 
@@ -170,11 +170,11 @@ const Shop: React.FC = () => {
                           {buying === item.id ? (
                             <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
                           ) : canAfford ? (
-                            'Purchase'
+                            'Chốt đơn!'
                           ) : (
                             <div className="flex items-center">
                               <Lock className="h-4 w-4 mr-2" />
-                              Insufficient
+                              Cháy túi rồi
                             </div>
                           )}
                         </Button>
@@ -187,8 +187,8 @@ const Shop: React.FC = () => {
           ) : (
             <div className="col-span-full py-20 text-center bg-white/50 backdrop-blur-xl rounded-[3rem] border-2 border-dashed border-slate-200">
               <ShoppingBag className="h-16 w-16 text-slate-200 mx-auto mb-6" />
-              <p className="text-slate-400 font-bold text-xl">The shop is currently empty.</p>
-              <p className="text-slate-400">Check back later for new items!</p>
+              <p className="text-slate-400 font-bold text-xl">Shop đang cháy hàng.</p>
+              <p className="text-slate-400">Hãy quay lại sau để xem các vật phẩm mới nhé!</p>
             </div>
           )}
         </div>

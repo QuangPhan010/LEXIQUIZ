@@ -35,7 +35,7 @@ const Result: React.FC = () => {
     </div>
   );
 
-  if (!result) return <div className="text-slate-900 text-center pt-24">Result not found.</div>;
+  if (!result) return <div className="text-slate-900 text-center pt-24 font-bold">Kết quả không tồn tại.</div>;
 
   const percentage = (result.score / result.total_questions) * 100;
   const isPassed = percentage >= 50;
@@ -61,10 +61,10 @@ const Result: React.FC = () => {
             </div>
 
             <h1 className="text-5xl font-black mb-4 tracking-tight text-slate-900">
-              {isPassed ? 'Awesome Job!' : 'Nice Try!'}
+              {isPassed ? 'Làm tốt lắm!' : 'Cố gắng thêm nhé!'}
             </h1>
             <p className="text-lg text-slate-500 font-medium mb-8">
-              You've just completed <span className="text-slate-900 font-bold underline decoration-primary-500/30">{result.quiz_title}</span>
+              Bạn vừa hoàn thành bộ câu hỏi <span className="text-slate-900 font-bold underline decoration-primary-500/30">{result.quiz_title}</span>
             </p>
 
             <div className="flex justify-center mb-12">
@@ -101,26 +101,26 @@ const Result: React.FC = () => {
                 </svg>
                 <div className="absolute text-center transform rotate-0">
                   <span className="text-7xl font-black block text-slate-900 leading-none">{result.score}</span>
-                  <span className="text-slate-400 text-sm font-black uppercase tracking-widest mt-2 block">out of {result.total_questions}</span>
+                  <span className="text-slate-400 text-sm font-black uppercase tracking-widest mt-2 block">trên {result.total_questions} câu</span>
                 </div>
               </div>
 
               <div className="flex space-x-12 pt-4">
                 <div className="text-center">
-                  <p className="text-slate-400 text-xs uppercase font-black tracking-widest mb-2">Efficiency</p>
+                  <p className="text-slate-400 text-xs uppercase font-black tracking-widest mb-2">Độ chính xác</p>
                   <p className="text-4xl font-black text-slate-900">{Math.round(percentage)}%</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-400 text-xs uppercase font-black tracking-widest mb-2">Time Taken</p>
+                  <p className="text-slate-400 text-xs uppercase font-black tracking-widest mb-2">Thời gian</p>
                   <div className="flex items-center justify-center text-4xl font-black text-slate-900">
                     <Clock className="h-6 w-6 mr-2 text-slate-300" />
                     {formatDuration(result.duration)}
                   </div>
                 </div>
                 <div className="text-center">
-                  <p className="text-slate-400 text-xs uppercase font-black tracking-widest mb-2">Result</p>
+                  <p className="text-slate-400 text-xs uppercase font-black tracking-widest mb-2">Kết quả</p>
                   <p className={`text-4xl font-black ${isPassed ? 'text-accent-emerald' : 'text-primary-500'}`}>
-                    {isPassed ? 'Passed' : 'Try Again'}
+                    {isPassed ? 'Đạt' : 'Làm lại'}
                   </p>
                 </div>
               </div>
@@ -129,7 +129,7 @@ const Result: React.FC = () => {
             <div className="mt-16 text-left">
               <div className="flex items-center space-x-3 mb-8">
                 <HelpCircle className="h-6 w-6 text-primary-500" />
-                <h2 className="text-2xl font-black text-slate-800">Review Answers</h2>
+                <h2 className="text-2xl font-black text-slate-800">Xem lại đáp án</h2>
               </div>
               
               <div className="space-y-6">
@@ -151,27 +151,27 @@ const Result: React.FC = () => {
                         {isCorrect ? (
                           <div className="flex items-center space-x-1 text-accent-emerald text-xs font-black uppercase tracking-widest bg-accent-emerald/10 px-3 py-1 rounded-full">
                             <CheckCircle2 className="h-3 w-3" />
-                            <span>Correct</span>
+                            <span>Chính xác</span>
                           </div>
                         ) : (
                           <div className="flex items-center space-x-1 text-rose-500 text-xs font-black uppercase tracking-widest bg-rose-50 px-3 py-1 rounded-full">
                             <XCircle className="h-3 w-3" />
-                            <span>Incorrect</span>
+                            <span>Chưa đúng</span>
                           </div>
                         )}
                       </div>
                                            <div className="space-y-4">
                         <div className="space-y-2">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Your Answer</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Câu trả lời của bạn</p>
                           <div className={`p-4 rounded-2xl border-2 font-bold ${
                             isCorrect ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-rose-50 border-rose-100 text-rose-600'
                           }`}>
-                            {answer.selected_choice_text || 'No answer'}
+                            {answer.selected_choice_text || 'Chưa trả lời'}
                           </div>
                         </div>
                         {!isCorrect && (
                           <div className="space-y-2">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correct Answer</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Đáp án đúng</p>
                             <div className="p-4 rounded-2xl border-2 border-accent-emerald bg-accent-emerald/5 text-accent-emerald font-bold">
                               {answer.correct_choice_text}
                             </div>
@@ -188,13 +188,13 @@ const Result: React.FC = () => {
               <Link to={`/take/${result.quiz}`}>
                 <Button variant="primary" className="w-full py-5 text-lg rounded-2xl">
                   <RefreshCw className="h-5 w-5 mr-3" />
-                  Try Again
+                  Làm lại ngay
                 </Button>
               </Link>
               <Link to="/history">
                 <Button variant="outline" className="w-full py-5 text-lg rounded-2xl">
                   <History className="h-5 w-5 mr-3" />
-                  My Progress
+                  Tiến trình của tôi
                 </Button>
               </Link>
             </div>
@@ -202,12 +202,12 @@ const Result: React.FC = () => {
             <div className="mt-10 flex items-center justify-center space-x-6">
               <Link to="/" className="text-slate-400 hover:text-slate-900 font-bold transition-colors flex items-center">
                 <Home className="h-4 w-4 mr-2" />
-                Home
+                Trang chủ
               </Link>
               <div className="h-1 w-1 bg-slate-200 rounded-full" />
               <button className="text-slate-400 hover:text-primary-600 font-bold transition-colors flex items-center">
                 <Star className="h-4 w-4 mr-2" />
-                Rate Quiz
+                Đánh giá Quiz
               </button>
             </div>
           </div>

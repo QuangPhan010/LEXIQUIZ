@@ -57,7 +57,7 @@ const History: React.FC = () => {
           <div className="bg-primary-600 p-3.5 rounded-2xl shadow-lg shadow-primary-500/20">
             <HistoryIcon className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">Your Progress</h1>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900">Tiến trình của bạn</h1>
         </div>
 
         {!loading && history.length > 0 && (
@@ -70,7 +70,7 @@ const History: React.FC = () => {
                     <Target className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Avg. Accuracy</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Độ chính xác TB</p>
                     <p className="text-3xl font-black text-slate-900">{averageScore}%</p>
                   </div>
                 </div>
@@ -81,7 +81,7 @@ const History: React.FC = () => {
                     <Zap className="h-6 w-6 fill-accent-amber" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Total XP</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Tổng XP</p>
                     <p className="text-3xl font-black text-slate-900">{totalXP}</p>
                   </div>
                 </div>
@@ -92,7 +92,7 @@ const History: React.FC = () => {
                     <Trophy className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Completed</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Đã hoàn thành</p>
                     <p className="text-3xl font-black text-slate-900">{history.length}</p>
                   </div>
                 </div>
@@ -104,9 +104,9 @@ const History: React.FC = () => {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-5 w-5 text-primary-500" />
-                  <h2 className="text-xl font-black text-slate-800">Accuracy Trend</h2>
+                  <h2 className="text-xl font-black text-slate-800">Xu hướng chính xác</h2>
                 </div>
-                <span className="text-xs font-bold text-slate-400">Last 10 attempts</span>
+                <span className="text-xs font-bold text-slate-400">10 lần làm gần nhất</span>
               </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -160,16 +160,16 @@ const History: React.FC = () => {
         ) : history.length === 0 ? (
           <Card className="text-center py-24 bg-white/50 border-dashed border-2">
             <Trophy className="h-20 w-20 text-slate-200 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-slate-800">No attempts yet</h3>
-            <p className="text-slate-500 mt-2 text-lg">Start your learning journey today!</p>
+            <h3 className="text-2xl font-bold text-slate-800">Chưa có lượt làm nào</h3>
+            <p className="text-slate-500 mt-2 text-lg">Bắt đầu hành trình học tập ngay hôm nay!</p>
             <Link to="/" className="mt-8 inline-block text-primary-600 font-black hover:underline underline-offset-8 decoration-4">
-              Browse All Quizzes →
+              Xem tất cả bộ câu hỏi →
             </Link>
           </Card>
         ) : (
           <div className="space-y-6">
             <div className="flex items-center justify-between px-2 mb-4">
-              <h2 className="text-2xl font-black text-slate-800">Attempt History</h2>
+              <h2 className="text-2xl font-black text-slate-800">Lịch sử làm bài</h2>
             </div>
             {history.map((record) => {
               const percentage = (record.score / record.total_questions) * 100;

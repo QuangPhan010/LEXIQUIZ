@@ -121,6 +121,7 @@ class KahootConsumer(AsyncWebsocketConsumer):
             'username': self.display_name,
             'avatar': avatar_url,
             'score': 0,
+            'combo': 0,
             'is_host': is_host,
             'channel_name': self.channel_name,
         }
@@ -181,11 +182,16 @@ class KahootConsumer(AsyncWebsocketConsumer):
         if self.display_name in room['answers_this_round']:
             return
 
+        # choice_id (MCQ/TF), choice_ids (ORDER), or matches (MATCH)
         choice_id = data.get('choice_id')
-        time_taken = data.get('time_taken', 30)  # seconds taken to answer
+        choice_ids = data.get('choice_ids')
+        matches = data.get('matches')
+        time_taken = data.get('time_taken', 30)
 
         room['answers_this_round'][self.display_name] = {
             'choice_id': choice_id,
+            'choice_ids': choice_ids,
+            'matches': matches,
             'time_taken': time_taken,
         }
 
@@ -252,10 +258,11 @@ class KahootConsumer(AsyncWebsocketConsumer):
                     'question': {
                         'id': question['id'],
                         'text': question['text'],
+                        'type': question.get('type', 'MCQ'),
                         'image': question.get('image'),
                         'video_url': question.get('video_url', ''),
                         'time_limit_seconds': time_limit,
-                        'choices': safe_choices,
+                        'choices': question['choices'], # Send all info, frontend handles safety
                     },
                 }
             }
@@ -285,18 +292,54 @@ class KahootConsumer(AsyncWebsocketConsumer):
         )
         time_limit = question.get('time_limit_seconds', 10)
 
-        # Score players: base 1000pts, speed bonus
+        # Score players: base 1000pts, speed bonus, combo multiplier
         results = {}
         for username, ans in room['answers_this_round'].items():
-            is_correct = (ans['choice_id'] == correct_choice_id)
+            is_correct = False
+            q_type = question.get('type', 'MCQ')
+
+            if q_type in ['MCQ', 'TF']:
+                is_correct = (ans['choice_id'] == correct_choice_id)
+            elif q_type == 'ORDER':
+                correct_order = sorted(question['choices'], key=lambda x: x.get('order', 0))
+                correct_ids = [c['id'] for c in correct_order]
+                # Filter out any non-id data in ans['choice_ids'] just in case
+                is_correct = (ans['choice_ids'] == correct_ids)
+            elif q_type == 'MATCH':
+                # matches is expected to be { choice_id: match_text }
+                is_correct = True
+                for choice in question['choices']:
+                    submitted_match = ans.get('matches', {}).get(str(choice['id']))
+                    if choice.get('match_text') != submitted_match:
+                        is_correct = False
+                        break
+
             if is_correct:
-                speed_bonus = max(0, (time_limit - ans['time_taken']) / time_limit)
-                points = int(1000 + 1000 * speed_bonus)
+                if username in room['players']:
+                    room['players'][username]['combo'] += 1
+                    combo = room['players'][username]['combo']
+                    
+                    # Combo Multipliers: 1.0 (1-2), 1.2 (3-4), 1.5 (5-9), 2.0 (10+)
+                    multiplier = 1.0
+                    if combo >= 10: multiplier = 2.0
+                    elif combo >= 5: multiplier = 1.5
+                    elif combo >= 3: multiplier = 1.2
+                    
+                    speed_bonus = max(0, (time_limit - ans['time_taken']) / time_limit)
+                    points = int((1000 + 1000 * speed_bonus) * multiplier)
+                    room['players'][username]['score'] += points
+                else:
+                    points = 0
             else:
+                if username in room['players']:
+                    room['players'][username]['combo'] = 0
                 points = 0
-            results[username] = {'is_correct': is_correct, 'points': points}
-            if username in room['players']:
-                room['players'][username]['score'] += points
+
+            results[username] = {
+                'is_correct': is_correct, 
+                'points': points,
+                'combo': room['players'].get(username, {}).get('combo', 0)
+            }
 
         # Build leaderboard
         leaderboard = self._get_leaderboard(room)
@@ -399,7 +442,13 @@ class KahootConsumer(AsyncWebsocketConsumer):
             }
             for q in questions:
                 choices = [
-                    {'id': c.id, 'text': c.text, 'is_correct': c.is_correct}
+                    {
+                        'id': c.id, 
+                        'text': c.text, 
+                        'is_correct': c.is_correct,
+                        'match_text': c.match_text,
+                        'order': c.order
+                    }
                     for c in q.choices.all()
                 ]
                 data['questions'].append({

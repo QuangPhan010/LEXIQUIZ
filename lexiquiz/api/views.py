@@ -45,7 +45,18 @@ class AuthViewSet(viewsets.GenericViewSet):
             return Response({"error": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
         
         if request.method == 'GET':
-            serializer = self.get_serializer(request.user)
+            user = request.user
+            profile = getattr(user, 'profile', None)
+            if profile:
+                from datetime import date, timedelta
+                today = date.today()
+                
+                # Reset streak if missed more than 1 day
+                if profile.last_active and profile.last_active < today - timedelta(days=1):
+                    profile.streak_count = 0
+                    profile.save()
+
+            serializer = self.get_serializer(user)
             return Response(serializer.data)
         
         elif request.method == 'PATCH':
@@ -81,6 +92,26 @@ class AuthViewSet(viewsets.GenericViewSet):
             follow.delete()
             return Response({"message": "Unfollowed", "is_following": False})
         return Response({"message": "Followed", "is_following": True})
+    @action(detail=False, methods=['post'])
+    def change_password(self, request):
+        if not request.user.is_authenticated:
+            return Response({"error": "Not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        
+        if not old_password or not new_password:
+            return Response({"error": "Vui lòng nhập mật khẩu cũ và mới"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if not request.user.check_password(old_password):
+            return Response({"error": "Mật khẩu cũ không chính xác"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if len(new_password) < 6:
+            return Response({"error": "Mật khẩu mới phải có ít nhất 6 ký tự"}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.set_password(new_password)
+        request.user.save()
+        return Response({"message": "Đổi mật khẩu thành công!"})
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
@@ -301,13 +332,18 @@ class ResultViewSet(viewsets.ModelViewSet):
             
             # 3. Streak Logic
             today = date.today()
-            if profile.streak_count == 0:
+            if not profile.last_active or profile.last_active < today - timedelta(days=1):
+                # Missed a day or first time
                 profile.streak_count = 1
             elif profile.last_active == today - timedelta(days=1):
+                # Consecutive day
                 profile.streak_count += 1
-            elif profile.last_active < today - timedelta(days=1):
-                profile.streak_count = 1
-            # If last_active is today, streak remains same
+            # If last_active == today, streak remains unchanged
+            
+            # Update max streak if needed
+            if profile.streak_count > profile.max_streak:
+                profile.max_streak = profile.streak_count
+                
             profile.last_active = today
             profile.save()
 
@@ -468,16 +504,21 @@ class QuizRatingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return QuizRating.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        # Update or create
-        user = self.request.user
-        quiz = serializer.validated_data['quiz']
-        rating = serializer.validated_data['rating']
+    def create(self, request, *args, **kwargs):
+        quiz_id = request.data.get('quiz')
+        rating = request.data.get('rating')
         
-        QuizRating.objects.update_or_create(
-            user=user, quiz=quiz,
+        if not quiz_id or not rating:
+            return Response({"error": "Missing quiz or rating"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        rating_obj, created = QuizRating.objects.update_or_create(
+            user=request.user, 
+            quiz_id=quiz_id,
             defaults={'rating': rating}
         )
+        
+        serializer = self.get_serializer(rating_obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 class GameRoomViewSet(viewsets.ViewSet):
