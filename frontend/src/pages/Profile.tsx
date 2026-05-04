@@ -533,7 +533,14 @@ const Profile: React.FC = () => {
                   {inventory.filter(i => i.item.item_type === 'FRAME').map((inv) => (
                     <Card key={inv.id} className={`p-6 rounded-[2.5rem] border-2 text-center ${inv.is_equipped ? 'border-primary-500 bg-primary-50/30' : 'border-slate-50'}`}>
                       <div className="h-24 w-24 relative mx-auto mb-6">
-                        <UserAvatar user={{ ...user!, equipped_frame: inv.item.image }} size="xl" />
+                        <UserAvatar 
+                          user={{ 
+                            ...user!, 
+                            equipped_frame: inv.item.image,
+                            frame_animation: inv.item.config?.animation || '' 
+                          }} 
+                          size="xl" 
+                        />
                       </div>
                       <h4 className="font-black text-slate-800 mb-1">{inv.item.name}</h4>
                       <Button variant={inv.is_equipped ? "accent" : "outline"} className="w-full mt-4" onClick={() => handleEquip(inv.id)}>

@@ -17,10 +17,11 @@ class UserSerializer(serializers.ModelSerializer):
     is_streak_active = serializers.SerializerMethodField()
 
     equipped_frame = serializers.SerializerMethodField()
+    frame_animation = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'max_streak', 'coins', 'is_streak_active', 'equipped_frame')
+        fields = ('id', 'username', 'email', 'password', 'xp', 'level', 'avatar', 'streak_count', 'max_streak', 'coins', 'is_streak_active', 'equipped_frame', 'frame_animation')
 
     def get_equipped_frame(self, obj):
         inventory = UserInventory.objects.filter(user=obj, item__item_type='FRAME', is_equipped=True).first()
@@ -30,6 +31,12 @@ class UserSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(inventory.item.image.url)
             return inventory.item.image.url
         return None
+
+    def get_frame_animation(self, obj):
+        inventory = UserInventory.objects.filter(user=obj, item__item_type='FRAME', is_equipped=True).first()
+        if inventory and inventory.item.config:
+            return inventory.item.config.get('animation', '')
+        return ''
 
     def get_avatar(self, obj):
         profile = getattr(obj, 'profile', None)
@@ -147,24 +154,71 @@ class QuizDetailSerializer(serializers.ModelSerializer):
 
 class UserAnswerSerializer(serializers.ModelSerializer):
     question_text = serializers.ReadOnlyField(source='question.text')
+    question_type = serializers.ReadOnlyField(source='question.question_type')
     selected_choice_text = serializers.SerializerMethodField()
     correct_choice_id = serializers.SerializerMethodField()
     correct_choice_text = serializers.SerializerMethodField()
 
     class Meta:
         model = UserAnswer
-        fields = ('id', 'question', 'question_text', 'selected_choice', 'selected_choice_text', 'correct_choice_id', 'correct_choice_text')
+        fields = ('id', 'question', 'question_text', 'question_type', 'selected_choice', 'selected_choice_text', 'correct_choice_id', 'correct_choice_text', 'answer_data')
 
     def get_selected_choice_text(self, obj):
-        return obj.selected_choice.text if obj.selected_choice else None
+        try:
+            if obj.question.question_type in ['MCQ', 'TF']:
+                return obj.selected_choice.text if obj.selected_choice else None
+            elif obj.question.question_type == 'ORDER':
+                if isinstance(obj.answer_data, list):
+                    # answer_data is a list of IDs
+                    choices = {c.id: c.text for c in obj.question.choices.all()}
+                    parts = []
+                    for cid in obj.answer_data:
+                        try:
+                            cid_int = int(cid)
+                            val = choices.get(cid_int)
+                            parts.append(str(val) if val is not None else str(cid))
+                        except (ValueError, TypeError):
+                            parts.append(str(cid))
+                    return " → ".join(parts)
+                return None
+            elif obj.question.question_type == 'MATCH':
+                if isinstance(obj.answer_data, dict):
+                    choices = {str(c.id): c.text for c in obj.question.choices.all()}
+                    parts = []
+                    for cid, val in obj.answer_data.items():
+                        q_text = choices.get(str(cid))
+                        parts.append(f"{q_text if q_text is not None else cid}: {val}")
+                    return " | ".join(parts)
+                return None
+        except Exception as e:
+            print(f"Error in get_selected_choice_text: {e}")
+            return str(obj.answer_data)
+        return None
 
     def get_correct_choice_id(self, obj):
-        correct_choice = obj.question.choices.filter(is_correct=True).first()
-        return correct_choice.id if correct_choice else None
+        try:
+            if obj.question.question_type in ['MCQ', 'TF']:
+                correct_choice = obj.question.choices.filter(is_correct=True).first()
+                return correct_choice.id if correct_choice else None
+        except Exception:
+            pass
+        return None 
 
     def get_correct_choice_text(self, obj):
-        correct_choice = obj.question.choices.filter(is_correct=True).first()
-        return correct_choice.text if correct_choice else None
+        try:
+            if obj.question.question_type in ['MCQ', 'TF']:
+                correct_choice = obj.question.choices.filter(is_correct=True).first()
+                return correct_choice.text if correct_choice else None
+            elif obj.question.question_type == 'ORDER':
+                correct_order = obj.question.choices.all().order_by('order')
+                return " → ".join([c.text for c in correct_order if c.text])
+            elif obj.question.question_type == 'MATCH':
+                choices = obj.question.choices.all()
+                return " | ".join([f"{c.text}: {c.match_text}" for c in choices if c.text and c.match_text])
+        except Exception as e:
+            print(f"Error in get_correct_choice_text: {e}")
+            return "Error loading correct answer"
+        return None
 
 class ResultSerializer(serializers.ModelSerializer):
     quiz_title = serializers.ReadOnlyField(source='quiz.title')
@@ -173,6 +227,14 @@ class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
         fields = ('id', 'user', 'quiz', 'quiz_title', 'score', 'total_questions', 'duration', 'completed_at', 'answers')
+        read_only_fields = ('user', 'completed_at')
+
+class ResultListSerializer(serializers.ModelSerializer):
+    quiz_title = serializers.ReadOnlyField(source='quiz.title')
+
+    class Meta:
+        model = Result
+        fields = ('id', 'user', 'quiz', 'quiz_title', 'score', 'total_questions', 'duration', 'completed_at')
         read_only_fields = ('user', 'completed_at')
 
 class DailyQuestSerializer(serializers.ModelSerializer):

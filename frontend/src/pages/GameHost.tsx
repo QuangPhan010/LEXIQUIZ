@@ -14,8 +14,10 @@ import {
   UserX,
   MessageSquare,
   ShieldCheck,
-  Award
+  Award,
+  QrCode
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Player {
   username: string;
@@ -109,7 +111,7 @@ const GameHost: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-primary-100">
         <Navbar />
-        <main className="max-w-5xl mx-auto pt-24 px-4 pb-12">
+        <main className="max-w-5xl mx-auto pt-36 px-4 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div className="lg:col-span-2">
@@ -160,6 +162,24 @@ const GameHost: React.FC = () => {
             </div>
 
             <div className="space-y-6">
+              <Card className="p-6 border-slate-200 bg-white shadow-xl rounded-[2rem] text-center">
+                <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center mx-auto mb-4 text-slate-400">
+                  <QrCode className="h-5 w-5" />
+                </div>
+                <h3 className="text-sm font-black mb-4 text-slate-900 uppercase tracking-widest">Quét để tham gia</h3>
+                <div className="bg-white p-4 rounded-2xl border-2 border-slate-50 inline-block mb-4">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/join/${pin}`}
+                    size={160}
+                    level="H"
+                    includeMargin={false}
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 leading-tight">
+                  Người chơi có thể quét mã này<br/>để vào phòng nhanh nhất.
+                </p>
+              </Card>
+
               <Card className="p-6 border-slate-200 bg-white shadow-xl shadow-slate-200/50 rounded-[2rem]">
                 <div className="h-12 w-12 rounded-2xl bg-primary-50 flex items-center justify-center mb-4 text-primary-600">
                   <ShieldCheck className="h-6 w-6" />
@@ -206,7 +226,7 @@ const GameHost: React.FC = () => {
     return (
       <div className="min-h-screen bg-white text-slate-900 selection:bg-primary-100">
         <Navbar />
-        <main className="max-w-4xl mx-auto pt-24 px-4 text-center">
+        <main className="max-w-4xl mx-auto pt-36 px-4 text-center">
           <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
             <div className="text-center md:text-left">
               <p className="text-[10px] font-black text-primary-600 uppercase tracking-[0.2em] mb-1">Câu hỏi {questionIndex + 1} / {totalQuestions}</p>
@@ -261,7 +281,7 @@ const GameHost: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-primary-100">
         <Navbar />
-        <main className="max-w-2xl mx-auto pt-24 px-4 pb-12">
+        <main className="max-w-2xl mx-auto pt-36 px-4 pb-12">
           <div className="text-center mb-10">
             <div className="inline-flex p-4 rounded-3xl bg-white shadow-xl shadow-slate-200/50 text-primary-600 mb-6">
               {gameState === 'finished' ? <Trophy className="h-10 w-10" /> : <Award className="h-10 w-10" />}

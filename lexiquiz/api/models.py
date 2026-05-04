@@ -101,6 +101,7 @@ class UserAnswer(models.Model):
     result = models.ForeignKey(Result, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE, null=True, blank=True)
+    answer_data = models.JSONField(null=True, blank=True) # For complex answers like ORDER and MATCH
 
     def __str__(self):
         return f"{self.result.user.username} - {self.question.text[:20]}"

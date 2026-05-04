@@ -10,7 +10,7 @@ from .models import (
 )
 from .serializers import (
     QuizSerializer, QuizDetailSerializer, QuestionSerializer, 
-    ResultSerializer, UserSerializer, CategorySerializer, 
+    ResultSerializer, ResultListSerializer, UserSerializer, CategorySerializer, 
     UserAnswerSerializer, DailyQuestSerializer, UserQuestSerializer,
     ItemSerializer, UserInventorySerializer, SkillXPSerializer,
     CommentSerializer, QuizRatingSerializer, GameRoomSerializer
@@ -260,8 +260,12 @@ class QuizViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class ResultViewSet(viewsets.ModelViewSet):
-    serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ResultListSerializer
+        return ResultSerializer
 
     def get_queryset(self):
         return Result.objects.filter(user=self.request.user).order_by('-completed_at')
@@ -297,22 +301,46 @@ class ResultViewSet(viewsets.ModelViewSet):
                 answers_data = {}
 
             for q in questions:
-                user_choice_id = answers_data.get(str(q.id))
+                ans = answers_data.get(str(q.id))
+                is_correct = False
                 choice = None
-                if user_choice_id:
-                    try:
-                        choice = Choice.objects.get(id=user_choice_id, question=q)
-                        if choice.is_correct:
-                            correct_count += 1
-                    except (Choice.DoesNotExist, ValueError, TypeError):
-                        print(f"DEBUG: Choice not found or invalid ID: {user_choice_id} for question {q.id}")
-                        pass
+
+                if q.question_type in ['MCQ', 'TF']:
+                    if ans:
+                        try:
+                            choice = Choice.objects.get(id=ans, question=q)
+                            if choice.is_correct:
+                                is_correct = True
+                        except (Choice.DoesNotExist, ValueError, TypeError):
+                            pass
+                elif q.question_type == 'ORDER':
+                    # ans is expected to be a list of choice IDs
+                    correct_order = q.choices.all().order_by('order')
+                    correct_ids = [c.id for c in correct_order]
+                    if isinstance(ans, list) and ans == correct_ids:
+                        is_correct = True
+                elif q.question_type == 'MATCH':
+                    # ans is expected to be { choice_id_str: match_text }
+                    if isinstance(ans, dict) and len(ans) > 0:
+                        is_correct = True
+                        choices = q.choices.all()
+                        for c in choices:
+                            submitted_match = ans.get(str(c.id))
+                            if c.match_text != submitted_match:
+                                is_correct = False
+                                break
+                    else:
+                        is_correct = False
+                
+                if is_correct:
+                    correct_count += 1
                 
                 # Save UserAnswer
                 UserAnswer.objects.create(
                     result=result,
                     question=q,
-                    selected_choice=choice
+                    selected_choice=choice,
+                    answer_data=ans # Save the full answer data (ID, list, or dict)
                 )
 
             # Update Result score
@@ -391,9 +419,13 @@ class LeaderboardViewSet(viewsets.ViewSet):
         for p in profiles:
             # Get equipped frame
             frame = None
+            frame_animation = ""
             inventory = UserInventory.objects.filter(user=p.user, item__item_type='FRAME', is_equipped=True).first()
-            if inventory and inventory.item.image:
-                frame = request.build_absolute_uri(inventory.item.image.url)
+            if inventory:
+                if inventory.item.image:
+                    frame = request.build_absolute_uri(inventory.item.image.url)
+                if inventory.item.config:
+                    frame_animation = inventory.item.config.get('animation', '')
             
             avatar = None
             if p.avatar:
@@ -403,6 +435,7 @@ class LeaderboardViewSet(viewsets.ViewSet):
                 'username': p.user.username,
                 'avatar': avatar,
                 'equipped_frame': frame,
+                'frame_animation': frame_animation,
                 'xp': p.xp,
                 'level': p.level,
                 'streak': p.streak_count
@@ -523,6 +556,7 @@ class QuizRatingViewSet(viewsets.ModelViewSet):
 
 class GameRoomViewSet(viewsets.ViewSet):
     """Endpoints for game room management (Kahoot-style)."""
+    permission_classes = [permissions.AllowAny]
 
     @action(detail=False, methods=['get'], url_path='(?P<pin>[0-9]{6})')
     def join(self, request, pin=None):

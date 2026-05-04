@@ -108,7 +108,7 @@ const Home: React.FC = () => {
             </div>
 
             {/* Body */}
-            <div className="p-8 space-y-4">
+            <div className="p-6 space-y-4">
               {/* Create Room */}
               <button
                 onClick={handleCreateRoom}
@@ -132,7 +132,7 @@ const Home: React.FC = () => {
               </div>
 
               {/* Join Room */}
-              <div className="p-5 rounded-2xl border-2 border-slate-100 space-y-3">
+              <div className="p-4 rounded-2xl border-2 border-slate-100 space-y-3">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="h-12 w-12 rounded-xl bg-primary-100 flex items-center justify-center text-primary-500 shrink-0">
                     <Hash className="h-6 w-6" />
@@ -148,15 +148,15 @@ const Home: React.FC = () => {
                     value={roomId}
                     onChange={(e) => setRoomId(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
-                    placeholder="Mã phòng (VD: AB12CD)"
+                    placeholder="Nhập mã phòng..."
                     maxLength={8}
-                    className="flex-1 h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-primary-400 outline-none font-bold tracking-widest text-slate-800 placeholder:font-normal placeholder:tracking-normal bg-slate-50"
+                    className="flex-1 min-w-0 h-12 px-4 rounded-xl border-2 border-slate-100 focus:border-primary-400 outline-none font-bold tracking-widest text-slate-800 placeholder:font-normal placeholder:tracking-normal bg-slate-50"
                     autoFocus
                   />
                   <Button
                     onClick={handleJoinRoom}
                     disabled={!roomId.trim()}
-                    className="h-12 px-6 rounded-xl font-bold shrink-0"
+                    className="h-12 px-4 rounded-xl font-bold shrink-0"
                   >
                     Vào phòng
                   </Button>

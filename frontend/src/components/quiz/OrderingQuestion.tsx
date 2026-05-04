@@ -15,10 +15,13 @@ interface OrderingQuestionProps {
 
 export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onAnswer, disabled }) => {
   const [items, setItems] = useState<Choice[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    // Shuffle items initially
-    setItems([...choices].sort(() => Math.random() - 0.5));
+    // Shuffle items initially if they haven't been reordered yet
+    if (items.length === 0) {
+      setItems([...choices].sort(() => Math.random() - 0.5));
+    }
   }, [choices]);
 
   const moveItem = (fromIndex: number, toIndex: number) => {
@@ -29,6 +32,31 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
     setItems(newItems);
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (disabled) return;
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Add a ghost image or styling if needed
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.4';
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    setDraggedIndex(null);
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (disabled || draggedIndex === null || draggedIndex === index) return;
+    
+    moveItem(draggedIndex, index);
+    setDraggedIndex(index);
+  };
+
   const handleSubmit = () => {
     if (disabled) return;
     onAnswer(items.map(item => item.id));
@@ -36,33 +64,43 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-bold text-slate-500 mb-4">Kéo thả để sắp xếp theo thứ tự đúng:</p>
-      <div className="space-y-2">
+      <p className="text-sm font-bold text-slate-500 mb-4 text-center">Kéo thả các ô để sắp xếp theo thứ tự đúng:</p>
+      <div className="space-y-3">
         {items.map((item, index) => (
           <div
             key={item.id}
-            className={`flex items-center p-4 bg-white border-2 border-slate-100 rounded-2xl shadow-sm transition-all ${disabled ? 'opacity-70' : 'hover:border-primary-300'}`}
+            draggable={!disabled}
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, index)}
+            className={`flex items-center p-4 sm:p-5 bg-white border-2 rounded-2xl shadow-sm transition-all cursor-grab active:cursor-grabbing ${
+              draggedIndex === index 
+                ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200' 
+                : 'border-slate-100 hover:border-primary-200'
+            } ${disabled ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            <div className="flex flex-col mr-4">
+            <div className="flex flex-col mr-4 sm:mr-6 shrink-0">
               <button 
+                type="button"
                 onClick={() => index > 0 && moveItem(index, index - 1)}
                 disabled={disabled || index === 0}
-                className="text-slate-300 hover:text-primary-500 disabled:opacity-30"
+                className="text-slate-300 hover:text-primary-500 disabled:opacity-20 p-1"
               >
                 ▲
               </button>
               <button 
+                type="button"
                 onClick={() => index < items.length - 1 && moveItem(index, index + 1)}
                 disabled={disabled || index === items.length - 1}
-                className="text-slate-300 hover:text-primary-500 disabled:opacity-30"
+                className="text-slate-300 hover:text-primary-500 disabled:opacity-20 p-1"
               >
                 ▼
               </button>
             </div>
-            <div className="flex-1 font-bold text-slate-700">
+            <div className="flex-1 font-bold text-slate-700 text-lg">
               {item.text}
             </div>
-            <GripVertical className="h-5 w-5 text-slate-300 ml-2" />
+            <GripVertical className="h-6 w-6 text-slate-300 ml-2 shrink-0" />
           </div>
         ))}
       </div>
@@ -70,7 +108,7 @@ export const OrderingQuestion: React.FC<OrderingQuestionProps> = ({ choices, onA
       {!disabled && (
         <button
           onClick={handleSubmit}
-          className="w-full mt-6 py-4 bg-primary-600 text-white font-black rounded-2xl shadow-lg shadow-primary-500/20 hover:bg-primary-700 active:scale-[0.98] transition-all"
+          className="w-full mt-8 py-5 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-black text-lg rounded-[1.5rem] shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           Xác nhận thứ tự
         </button>

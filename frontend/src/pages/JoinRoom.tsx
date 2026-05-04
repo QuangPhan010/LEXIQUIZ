@@ -70,7 +70,7 @@ const JoinRoom: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-primary-100">
       <Navbar />
       
-      <main className="max-w-md mx-auto pt-32 px-4 pb-12">
+      <main className="max-w-md mx-auto pt-40 px-4 pb-12">
         <Card className="p-10 border-slate-200 bg-white shadow-xl shadow-slate-200/50 relative overflow-hidden">
           {/* Subtle decoration */}
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary-100/50 blur-3xl rounded-full pointer-events-none" />

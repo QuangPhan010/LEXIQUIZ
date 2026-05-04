@@ -133,7 +133,11 @@ const Shop: React.FC = () => {
                 <Card key={item.id} className="group overflow-hidden border-0 shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col">
                   <div className="h-48 bg-gradient-to-br from-slate-50 to-slate-100 relative flex items-center justify-center p-8 shrink-0">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-full object-contain drop-shadow-2xl" />
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className={`h-full object-contain drop-shadow-2xl ${item.config?.animation || ''}`} 
+                      />
                     ) : (
                       <div className="h-24 w-24 rounded-3xl bg-white shadow-xl flex items-center justify-center text-primary-500 group-hover:rotate-12 transition-transform duration-500">
                         <IconComponent className="h-12 w-12" />

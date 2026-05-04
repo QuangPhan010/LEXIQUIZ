@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   level: number;
   avatar?: string | null;
   equipped_frame?: string | null;
+  frame_animation?: string | null;
 }
 
 const Leaderboard: React.FC = () => {

@@ -1,7 +1,7 @@
-from django.urls import re_path
+from django.urls import path
 from . import consumers
 
 websocket_urlpatterns = [
-    re_path(r'ws/duel/(?P<room_name>\w+)/$', consumers.DuelConsumer.as_asgi()),
-    re_path(r'ws/game/(?P<pin>[0-9]{6})/$', consumers.KahootConsumer.as_asgi()),
+    path('ws/duel/<str:room_name>/', consumers.DuelConsumer.as_asgi()),
+    path('ws/game/<str:pin>/', consumers.KahootConsumer.as_asgi()),
 ]

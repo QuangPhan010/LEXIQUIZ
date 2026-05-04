@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { UserAvatar } from '../components/UserAvatar';
 import { 
   Users, 
   Zap, 
@@ -19,6 +20,7 @@ import {
 interface Player {
   username: string;
   avatar: string | null;
+  equipped_frame: string | null;
   score: number;
   finished: boolean;
 }
@@ -33,7 +35,23 @@ const LiveDuel: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [messages, setMessages] = useState<{username: string, text: string, avatar?: string, equipped_frame?: string | null, time: string}[]>([]);
+  const [messageInput, setMessageInput] = useState('');
   const socketRef = useRef<WebSocket | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const getAvatarUrl = (path: string | null | undefined) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `http://localhost:8000${path}`;
+  };
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     let destroyed = false;
@@ -78,7 +96,13 @@ const LiveDuel: React.FC = () => {
         {
           const playersMap: Record<string, Player> = {};
           data.players.forEach((p: any) => {
-            playersMap[p.username] = { username: p.username, avatar: p.avatar, score: 0, finished: false };
+            playersMap[p.username] = { 
+              username: p.username, 
+              avatar: p.avatar, 
+              equipped_frame: p.equipped_frame,
+              score: 0, 
+              finished: false 
+            };
           });
           setPlayers(playersMap);
         }
@@ -90,6 +114,7 @@ const LiveDuel: React.FC = () => {
           [data.username]: {
             username: data.username,
             avatar: data.avatar,
+            equipped_frame: data.equipped_frame,
             score: 0,
             finished: false
           }
@@ -131,6 +156,16 @@ const LiveDuel: React.FC = () => {
           }
         }));
         break;
+
+      case 'chat':
+        setMessages(prev => [...prev, {
+          username: data.username,
+          text: data.text,
+          avatar: data.avatar,
+          equipped_frame: data.equipped_frame,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+        break;
     }
   };
 
@@ -139,6 +174,16 @@ const LiveDuel: React.FC = () => {
       action: 'start_game',
       quiz_id: quizId
     }));
+  };
+
+  const sendChatMessage = () => {
+    if (messageInput.trim() && socketRef.current) {
+      socketRef.current.send(jsonStr({
+        action: 'chat',
+        text: messageInput.trim()
+      }));
+      setMessageInput('');
+    }
   };
 
   const handleAnswer = (isCorrect: boolean) => {
@@ -184,9 +229,15 @@ const LiveDuel: React.FC = () => {
             <div className="flex items-center space-x-4">
               {Object.values(players).map(p => (
                 <div key={p.username} className="text-center">
-                  <div className="h-9 w-9 rounded-xl bg-slate-100 mx-auto mb-1 overflow-hidden border border-slate-200">
-                    {p.avatar ? <img src={p.avatar} alt={p.username} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center bg-primary-50 text-primary-500 font-bold text-xs">{p.username[0].toUpperCase()}</div>}
-                  </div>
+                  <UserAvatar 
+                    user={{
+                      username: p.username,
+                      avatar: getAvatarUrl(p.avatar),
+                      equipped_frame: getAvatarUrl(p.equipped_frame)
+                    }} 
+                    size="sm" 
+                    className="mx-auto mb-1 shadow-sm" 
+                  />
                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-tight">{p.username}</p>
                   <p className="text-xs font-black text-primary-600">{p.score}</p>
                 </div>
@@ -244,10 +295,15 @@ const LiveDuel: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {Object.values(players).map(p => (
                       <div key={p.username} className="animate-in zoom-in duration-500">
-                        <div className="h-20 w-20 rounded-3xl bg-gradient-to-tr from-slate-100 to-slate-50 mx-auto mb-3 flex items-center justify-center relative overflow-hidden group shadow-lg">
-                          {p.avatar ? <img src={p.avatar} alt={p.username} className="h-full w-full object-cover" /> : <Users className="h-8 w-8 text-slate-200" />}
-                          <div className="absolute inset-0 bg-primary-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
+                        <UserAvatar 
+                          user={{
+                            username: p.username,
+                            avatar: getAvatarUrl(p.avatar),
+                            equipped_frame: getAvatarUrl(p.equipped_frame)
+                          }} 
+                          size="lg" 
+                          className="mx-auto mb-3 shadow-xl" 
+                        />
                         <p className="text-xs font-black text-slate-900">{p.username}</p>
                         <span className="text-[10px] font-bold text-accent-emerald uppercase tracking-widest">Sẵn sàng</span>
                       </div>
@@ -279,9 +335,15 @@ const LiveDuel: React.FC = () => {
                     <div key={p.username} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${idx === 0 ? 'border-accent-amber/30 bg-accent-amber/5' : 'border-slate-100 bg-slate-50'}`}>
                       <div className="flex items-center space-x-4">
                         <span className={`text-lg font-black w-6 ${idx === 0 ? 'text-accent-amber' : 'text-slate-300'}`}>{idx + 1}</span>
-                        <div className="h-10 w-10 rounded-xl bg-white overflow-hidden border border-slate-100 shadow-sm">
-                          {p.avatar ? <img src={p.avatar} alt={p.username} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold text-xs">{p.username[0].toUpperCase()}</div>}
-                        </div>
+                        <UserAvatar 
+                          user={{
+                            username: p.username,
+                            avatar: getAvatarUrl(p.avatar),
+                            equipped_frame: getAvatarUrl(p.equipped_frame)
+                          }} 
+                          size="md" 
+                          className="shadow-sm" 
+                        />
                         <span className="text-sm font-black text-slate-700">{p.username}</span>
                       </div>
                       <span className="text-lg font-black text-primary-600">{p.score}</span>
@@ -323,20 +385,59 @@ const LiveDuel: React.FC = () => {
               </ul>
             </Card>
 
-            <Card className="p-8 border-0 shadow-xl h-[400px] flex flex-col">
+            <Card className="p-8 border-0 shadow-xl h-[450px] flex flex-col">
               <h3 className="text-xl font-black mb-6 flex items-center text-slate-900">
                 <MessageSquare className="h-6 w-6 mr-3 text-primary-600" />
                 Trò chuyện Quyết đấu
               </h3>
-              <div className="flex-1 bg-slate-50 rounded-3xl p-6 mb-4 overflow-y-auto">
-                <p className="text-slate-400 text-center text-xs font-bold uppercase tracking-widest mt-20">System: Channel Open</p>
+              <div 
+                ref={chatContainerRef}
+                className="flex-1 bg-slate-50 rounded-3xl p-4 mb-4 overflow-y-auto space-y-3 scroll-smooth"
+              >
+                {messages.length === 0 ? (
+                  <p className="text-slate-400 text-center text-xs font-bold uppercase tracking-widest mt-20">Hệ thống: Kênh đã mở</p>
+                ) : (
+                  messages.map((msg, i) => (
+                    <div key={i} className={`flex items-start space-x-2 animate-in slide-in-from-bottom-2 duration-300 ${msg.username === user?.username ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                      <UserAvatar 
+                        user={{
+                          username: msg.username,
+                          avatar: getAvatarUrl(msg.avatar),
+                          equipped_frame: getAvatarUrl(msg.equipped_frame)
+                        }} 
+                        size="sm" 
+                        className="shrink-0 shadow-sm" 
+                      />
+                      <div className={`max-w-[75%] p-3 rounded-2xl text-sm ${
+                        msg.username === user?.username 
+                          ? 'bg-primary-600 text-white rounded-tr-none' 
+                          : 'bg-white text-slate-700 shadow-sm border border-slate-100 rounded-tl-none'
+                      }`}>
+                        <div className="flex items-center justify-between space-x-4 mb-1">
+                          <p className={`text-[10px] font-black ${msg.username === user?.username ? 'text-primary-100' : 'text-primary-600'}`}>
+                            {msg.username}
+                          </p>
+                          <p className="text-[8px] opacity-50">{msg.time}</p>
+                        </div>
+                        <p className="font-medium break-words leading-relaxed">{msg.text}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="flex space-x-2">
                 <input 
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
                   placeholder="Gửi tin nhắn..." 
-                  className="flex-1 h-12 rounded-2xl px-6 bg-slate-50 border-0 text-sm font-medium"
+                  className="flex-1 h-12 rounded-2xl px-6 bg-slate-50 border-2 border-transparent focus:border-primary-500 focus:bg-white outline-none text-sm font-bold transition-all"
                 />
-                <Button className="rounded-2xl h-12 w-12 p-0">
+                <Button 
+                  onClick={sendChatMessage}
+                  disabled={!messageInput.trim()}
+                  className="rounded-2xl h-12 w-12 p-0 shadow-lg"
+                >
                   <Zap className="h-5 w-5 fill-current" />
                 </Button>
               </div>

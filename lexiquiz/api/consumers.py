@@ -2,6 +2,7 @@ import json
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
+from urllib.parse import parse_qs, unquote_plus
 from .models import Quiz, GameRoom
 
 # In-memory room state: { pin: { ... } }
@@ -18,67 +19,121 @@ from .models import Quiz, GameRoom
 #   }
 # }
 game_rooms = {}
+duel_rooms = {} # In-memory state for duels: { room_name: { players: { username: { ... } } } }
 
+
+@sync_to_async
+def db_check_room_exists(pin):
+    return GameRoom.objects.filter(pin=pin, is_active=True).exists()
+
+@sync_to_async
+def db_check_is_host(pin, user):
+    if user.is_anonymous: return False
+    return GameRoom.objects.filter(pin=pin, host=user).exists()
+
+@sync_to_async
+def db_get_avatar_url(user):
+    if user.is_anonymous: return None
+    try:
+        profile = user.profile
+        if profile.avatar: return profile.avatar.url
+    except: pass
+    return None
+
+@sync_to_async
+def db_get_equipped_frame_by_username(username):
+    from .models import UserInventory, User
+    try:
+        user = User.objects.filter(username=username).first()
+        if not user: return None
+        inventory = UserInventory.objects.filter(user=user, item__item_type='FRAME', is_equipped=True).select_related('item').first()
+        if inventory and inventory.item.image: return inventory.item.image.url
+    except: pass
+    return None
+
+@sync_to_async
+def db_get_quiz_data(pin):
+    try:
+        room = GameRoom.objects.get(pin=pin)
+        quiz = room.quiz
+        questions = quiz.questions.all().order_by('order')
+        data = {'id': quiz.id, 'title': quiz.title, 'questions': []}
+        for q in questions:
+            choices = [{'id': c.id, 'text': c.text, 'is_correct': c.is_correct, 'match_text': c.match_text, 'order': c.order} for c in q.choices.all()]
+            data['questions'].append({
+                'id': q.id, 'text': q.text, 'image': q.image.url if q.image else None,
+                'video_url': q.video_url or '', 'time_limit_seconds': q.time_limit_seconds,
+                'choices': choices, 'type': q.question_type,
+            })
+        return data
+    except: return None
+
+@sync_to_async
+def db_deactivate_room(pin):
+    GameRoom.objects.filter(pin=pin).update(is_active=False)
 
 class KahootConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.pin = self.scope['url_route']['kwargs']['pin']
-        self.room_group_name = f'kahoot_{self.pin}'
-        self.user = self.scope['user']
-        # Guest support: allow anonymous but give them a temporary name via query param
-        query_string = self.scope.get('query_string', b'').decode()
-        params = dict(x.split('=') for x in query_string.split('&') if '=' in x)
-        self.guest_name = params.get('guest_name', '').strip()
-        self.is_guest = self.user.is_anonymous
+        try:
+            self.pin = self.scope['url_route']['kwargs']['pin']
+            self.room_group_name = f'kahoot_{self.pin}'
+            self.user = self.scope['user']
+            
+            query_string = self.scope.get('query_string', b'').decode()
+            params = parse_qs(query_string)
+            guest_name_raw = params.get('guest_name', [''])[0]
+            self.guest_name = unquote_plus(guest_name_raw).strip()
+            self.is_guest = self.user.is_anonymous
 
-        if self.is_guest and not self.guest_name:
+            if self.is_guest and not self.guest_name:
+                await self.close()
+                return
+
+            self.display_name = self.guest_name if self.is_guest else self.user.username
+
+            # Validate room exists
+            if not await db_check_room_exists(self.pin):
+                await self.close()
+                return
+
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.accept()
+        except Exception as e:
+            print(f"[WebSocket Error] Connect error: {str(e)}")
             await self.close()
-            return
-
-        self.display_name = self.guest_name if self.is_guest else self.user.username
-
-        # Validate room exists
-        room_exists = await self.check_room_exists()
-        if not room_exists:
-            await self.close()
-            return
-
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        await self.accept()
 
     async def disconnect(self, close_code):
-        if self.pin in game_rooms:
-            room = game_rooms[self.pin]
-            room['players'].pop(self.display_name, None)
+        try:
+            if self.pin in game_rooms:
+                room = game_rooms[self.pin]
+                room['players'].pop(self.display_name, None)
 
-            # If host disconnects, notify everyone
-            if room.get('host_channel') == self.channel_name:
-                # Cancel timer if running
-                if room.get('timer_task') and not room['timer_task'].done():
-                    room['timer_task'].cancel()
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {'type': 'kahoot_message', 'message': {'type': 'host_left'}}
-                )
-            else:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'kahoot_message',
-                        'message': {
-                            'type': 'player_left',
-                            'username': self.display_name,
-                            'players': self._get_players_list(room),
+                if room.get('host_channel') == self.channel_name:
+                    if room.get('timer_task') and not room['timer_task'].done():
+                        room['timer_task'].cancel()
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {'type': 'kahoot_message', 'message': {'type': 'host_left'}}
+                    )
+                else:
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {
+                            'type': 'kahoot_message',
+                            'message': {
+                                'type': 'player_left',
+                                'username': self.display_name,
+                                'players': await self._get_players_list(room),
+                            }
                         }
-                    }
-                )
-            if not room['players']:
-                # Cancel timer and clean up empty room
-                if room.get('timer_task') and not room['timer_task'].done():
-                    room['timer_task'].cancel()
-                del game_rooms[self.pin]
+                    )
+                if not room['players']:
+                    if room.get('timer_task') and not room['timer_task'].done():
+                        room['timer_task'].cancel()
+                    del game_rooms[self.pin]
 
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        except: pass
 
     async def receive(self, text_data):
         try:
@@ -99,8 +154,8 @@ class KahootConsumer(AsyncWebsocketConsumer):
     # ─── Handlers ────────────────────────────────────────────────────────────
 
     async def _handle_join(self):
-        avatar_url = None if self.is_guest else await self.get_avatar_url()
-        is_host = await self.check_is_host()
+        avatar_url = await db_get_avatar_url(self.user)
+        is_host = await db_check_is_host(self.pin, self.user)
 
         if self.pin not in game_rooms:
             game_rooms[self.pin] = {
@@ -135,8 +190,9 @@ class KahootConsumer(AsyncWebsocketConsumer):
                     'type': 'player_joined',
                     'username': self.display_name,
                     'avatar': avatar_url,
+                    'equipped_frame': await db_get_equipped_frame_by_username(self.display_name),
                     'is_host': is_host,
-                    'players': self._get_players_list(room),
+                    'players': await self._get_players_list(room),
                 }
             }
         )
@@ -145,7 +201,7 @@ class KahootConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'room_state',
             'state': room['state'],
-            'players': self._get_players_list(room),
+            'players': await self._get_players_list(room),
             'is_host': is_host,
             'pin': self.pin,
         }))
@@ -342,7 +398,7 @@ class KahootConsumer(AsyncWebsocketConsumer):
             }
 
         # Build leaderboard
-        leaderboard = self._get_leaderboard(room)
+        leaderboard = await self._get_leaderboard(room)
 
         # Broadcast reveal
         await self.channel_layer.group_send(
@@ -387,19 +443,31 @@ class KahootConsumer(AsyncWebsocketConsumer):
 
     # ─── Helpers ──────────────────────────────────────────────────────────────
 
-    def _get_players_list(self, room):
-        return [
-            {'username': p['username'], 'avatar': p['avatar'], 'score': p['score'], 'is_host': p['is_host']}
-            for p in room['players'].values()
-        ]
+    async def _get_players_list(self, room):
+        players = []
+        for p in room['players'].values():
+            players.append({
+                'username': p['username'], 
+                'avatar': p['avatar'], 
+                'equipped_frame': await self.get_equipped_frame_by_username(p['username']),
+                'score': p['score'], 
+                'is_host': p['is_host']
+            })
+        return players
 
-    def _get_leaderboard(self, room):
+    async def _get_leaderboard(self, room):
         players = [p for p in room['players'].values() if not p['is_host']]
         sorted_players = sorted(players, key=lambda p: p['score'], reverse=True)
-        return [
-            {'rank': i + 1, 'username': p['username'], 'avatar': p['avatar'], 'score': p['score']}
-            for i, p in enumerate(sorted_players)
-        ]
+        leaderboard = []
+        for i, p in enumerate(sorted_players):
+            leaderboard.append({
+                'rank': i + 1, 
+                'username': p['username'], 
+                'avatar': p['avatar'], 
+                'equipped_frame': await self.get_equipped_frame_by_username(p['username']),
+                'score': p['score']
+            })
+        return leaderboard
 
     async def kahoot_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
@@ -425,6 +493,32 @@ class KahootConsumer(AsyncWebsocketConsumer):
             profile = self.user.profile
             if profile.avatar:
                 return profile.avatar.url
+        except Exception:
+            pass
+        return None
+
+    @sync_to_async
+    def get_equipped_frame(self, user=None):
+        if not user: return None
+        from .models import UserInventory
+        try:
+            inventory = UserInventory.objects.filter(user=user, item__item_type='FRAME', is_equipped=True).select_related('item').first()
+            if inventory and inventory.item.image:
+                return inventory.item.image.url
+        except Exception:
+            pass
+        return None
+
+    @sync_to_async
+    def get_equipped_frame_by_username(self, username):
+        from .models import UserInventory, User
+        try:
+            user = User.objects.filter(username=username).first()
+            if not user:
+                return None
+            inventory = UserInventory.objects.filter(user=user, item__item_type='FRAME', is_equipped=True).select_related('item').first()
+            if inventory and inventory.item.image:
+                return inventory.item.image.url
         except Exception:
             pass
         return None
@@ -490,7 +584,189 @@ class DuelConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        pass
+        try:
+            data = json.loads(text_data)
+        except Exception:
+            return
+        
+        action = data.get('action')
+        
+        if action == 'join':
+            await self._handle_join()
+        elif action == 'chat':
+            await self._handle_chat(data)
+        elif action == 'start_game':
+            await self._handle_start_game(data)
+        elif action == 'submit_answer':
+            await self._handle_submit_answer(data)
+        elif action == 'finish':
+            await self._handle_finish(data)
+
+    async def _handle_join(self):
+        avatar_url = await self.get_avatar_url()
+        
+        if self.room_name not in duel_rooms:
+            duel_rooms[self.room_name] = {
+                'players': {},
+                'state': 'waiting'
+            }
+        
+        room = duel_rooms[self.room_name]
+        room['players'][self.user.username] = {
+            'username': self.user.username,
+            'avatar': avatar_url,
+            'score': 0,
+            'channel_name': self.channel_name
+        }
+
+        # Broadcast to room
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'duel_message',
+                'message': {
+                    'type': 'player_joined',
+                    'username': self.user.username,
+                    'avatar': avatar_url,
+                    'equipped_frame': await self.get_equipped_frame()
+                }
+            }
+        )
+
+        # Send current state to the joining player
+        players_list = []
+        for p in room['players'].values():
+            players_list.append({
+                'username': p['username'], 
+                'avatar': p['avatar'], 
+                'equipped_frame': await self.get_equipped_frame_by_username(p['username']),
+                'score': p['score']
+            })
+        await self.send(text_data=json.dumps({
+            'type': 'room_state',
+            'players': players_list
+        }))
+
+    async def _handle_chat(self, data):
+        text = data.get('text')
+        if not text:
+            return
+            
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'duel_message',
+                'message': {
+                    'type': 'chat',
+                    'username': self.user.username,
+                    'text': text,
+                    'avatar': await self.get_avatar_url(),
+                    'equipped_frame': await self.get_equipped_frame()
+                }
+            }
+        )
+
+    async def _handle_start_game(self, data):
+        quiz_id = data.get('quiz_id')
+        quiz_data = await self.get_quiz_data(quiz_id)
+        if not quiz_data:
+            return
+            
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'duel_message',
+                'message': {
+                    'type': 'game_started',
+                    'quiz': quiz_data
+                }
+            }
+        )
+
+    async def _handle_submit_answer(self, data):
+        score = data.get('score', 0)
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'duel_message',
+                'message': {
+                    'type': 'score_update',
+                    'username': self.user.username,
+                    'score': score
+                }
+            }
+        )
+
+    async def _handle_finish(self, data):
+        score = data.get('score', 0)
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'duel_message',
+                'message': {
+                    'type': 'player_finished',
+                    'username': self.user.username,
+                    'score': score
+                }
+            }
+        )
 
     async def duel_message(self, event):
         await self.send(text_data=json.dumps(event['message']))
+
+    @sync_to_async
+    def get_avatar_url(self):
+        try:
+            profile = self.user.profile
+            if profile.avatar:
+                return profile.avatar.url
+        except Exception:
+            pass
+        return None
+
+    @sync_to_async
+    def get_equipped_frame(self):
+        from .models import UserInventory
+        try:
+            inventory = UserInventory.objects.filter(user=self.user, item__item_type='FRAME', is_equipped=True).select_related('item').first()
+            if inventory and inventory.item.image:
+                return inventory.item.image.url
+        except Exception:
+            pass
+        return None
+
+    @sync_to_async
+    def get_equipped_frame_by_username(self, username):
+        from .models import UserInventory, User
+        try:
+            user = User.objects.get(username=username)
+            inventory = UserInventory.objects.filter(user=user, item__item_type='FRAME', is_equipped=True).select_related('item').first()
+            if inventory and inventory.item.image:
+                return inventory.item.image.url
+        except Exception:
+            pass
+        return None
+
+    @sync_to_async
+    def get_quiz_data(self, quiz_id):
+        try:
+            quiz = Quiz.objects.get(id=quiz_id)
+            questions = quiz.questions.all().order_by('order')
+            data = {
+                'id': quiz.id,
+                'title': quiz.title,
+                'questions': []
+            }
+            for q in questions:
+                choices = [
+                    {'id': c.id, 'text': c.text, 'is_correct': c.is_correct}
+                    for c in q.choices.all()
+                ]
+                data['questions'].append({
+                    'id': q.id,
+                    'text': q.text,
+                    'choices': choices
+                })
+            return data
+        except Exception:
+            return None

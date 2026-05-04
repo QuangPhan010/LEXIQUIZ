@@ -55,9 +55,11 @@ const GamePlay: React.FC = () => {
     
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const backendHost = window.location.hostname + ':8000';
-    let socketUrl = `${protocol}://${backendHost}/ws/game/${pin}/?`;
-    if (token) socketUrl += `token=${token}`;
-    if (guestName) socketUrl += `&guest_name=${encodeURIComponent(guestName)}`;
+    const params = new URLSearchParams();
+    if (token) params.append('token', token);
+    if (guestName) params.append('guest_name', guestName);
+    
+    const socketUrl = `${protocol}://${backendHost}/ws/game/${pin}/?${params.toString()}`;
     
     const socket = new WebSocket(socketUrl);
     socketRef.current = socket;
@@ -171,7 +173,7 @@ const GamePlay: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-primary-100">
         <Navbar />
-        <main className="max-w-md mx-auto pt-24 px-6 text-center">
+        <main className="max-w-md mx-auto pt-36 px-6 text-center">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 mb-10 relative animate-pulse">
             <Users className="h-12 w-12 text-primary-600 mx-auto mb-4" />
             <h1 className="text-2xl font-black mb-1 tracking-tight">Bạn đã vào phòng!</h1>
@@ -325,14 +327,15 @@ const GamePlay: React.FC = () => {
   }
 
   if (gameState === 'finished') {
-    const myName = new URLSearchParams(location.search).get('guest_name') || players[0]?.username;
+    const myName = new URLSearchParams(location.search).get('guest_name') || localStorage.getItem('username');
     const myResult = leaderboard.find(p => p.username === myName);
     const myRank = leaderboard.findIndex(p => p.username === myName) + 1;
+    const myResultData = lastResults && myName ? lastResults[myName] : null;
     
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-primary-100">
         <Navbar />
-        <main className="max-w-md mx-auto pt-24 px-6 pb-12 text-center">
+        <main className="max-w-md mx-auto pt-36 px-6 pb-12 text-center">
           <div className="mb-10 animate-in slide-in-from-top-8 duration-700">
             <div className="relative inline-block mb-8">
               <Trophy className={`h-24 w-24 ${myRank === 1 ? 'text-accent-amber' : 'text-slate-300'} drop-shadow-lg`} />
@@ -347,7 +350,7 @@ const GamePlay: React.FC = () => {
           <Card className="p-8 border-slate-200 bg-white mb-10 shadow-sm">
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
-                <p className="text-3xl font-black text-primary-600">{myResultData?.score || 0}</p>
+                <p className="text-3xl font-black text-primary-600">{myResult?.score || 0}</p>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Điểm số</p>
               </div>
               <div>

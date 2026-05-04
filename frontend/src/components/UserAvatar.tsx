@@ -6,6 +6,7 @@ interface UserAvatarProps {
     username: string;
     avatar?: string | null;
     equipped_frame?: string | null;
+    frame_animation?: string | null;
   } | null;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   className?: string;
@@ -13,6 +14,10 @@ interface UserAvatarProps {
 }
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({ user, size = 'md', className = '', avatarOverride }) => {
+  if (user?.frame_animation) {
+    console.log(`[Debug] User: ${user.username}, Frame Animation: ${user.frame_animation}`);
+  }
+
   const sizeClasses = {
     xs: 'h-6 w-6',
     sm: 'h-8 w-8',
@@ -31,7 +36,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ user, size = 'md', class
   }
 
   return (
-    <div className={`relative flex items-center justify-center ${sizeClasses[size]} ${className}`}>
+    <div className={`relative flex items-center justify-center rounded-full ${sizeClasses[size]} ${className}`}>
       {/* Avatar Container */}
       <div className={`
         relative h-full w-full rounded-full overflow-hidden
@@ -52,7 +57,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ user, size = 'md', class
 
       {/* Frame - Overlaid on top */}
       {user.equipped_frame && (
-        <div className="absolute inset-[-10%] z-10 pointer-events-none select-none">
+        <div className={`absolute inset-[-10%] z-10 pointer-events-none select-none ${user.frame_animation || ''}`}>
           <img 
             src={user.equipped_frame} 
             alt="Frame" 

@@ -134,7 +134,14 @@ const Result: React.FC = () => {
               
               <div className="space-y-6">
                 {result.answers && result.answers.map((answer: any, index: number) => {
-                  const isCorrect = answer.selected_choice === answer.correct_choice_id;
+                  const isOrder = answer.question_type === 'ORDER';
+                  const isMatch = answer.question_type === 'MATCH';
+                  const isMCQ = !isOrder && !isMatch;
+                  
+                  const isCorrect = isMCQ 
+                    ? (answer.selected_choice === answer.correct_choice_id)
+                    : (answer.selected_choice_text === answer.correct_choice_text);
+
                   return (
                     <div key={index} className={`p-6 rounded-3xl border-2 transition-all ${
                       isCorrect ? 'border-accent-emerald/20 bg-accent-emerald/5' : 'border-primary-100 bg-white shadow-sm'
@@ -142,38 +149,78 @@ const Result: React.FC = () => {
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start space-x-3">
                           <span className={`h-8 w-8 shrink-0 mt-0.5 rounded-xl flex items-center justify-center text-xs font-black ${
-                            isCorrect ? 'bg-accent-emerald text-white' : 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
-                          }`}>
+                            isCorrect ? 'bg-accent-emerald' : 'bg-rose-500'
+                          } text-white`}>
                             {index + 1}
                           </span>
-                          <h3 className="font-bold text-slate-800">{answer.question_text}</h3>
+                          <h3 className="font-bold text-slate-800 leading-tight">{answer.question_text}</h3>
                         </div>
                         {isCorrect ? (
-                          <div className="flex items-center space-x-1 text-accent-emerald text-xs font-black uppercase tracking-widest bg-accent-emerald/10 px-3 py-1 rounded-full">
+                          <div className="flex items-center space-x-1 text-accent-emerald text-[10px] font-black uppercase tracking-widest bg-accent-emerald/10 px-3 py-1 rounded-full shrink-0">
                             <CheckCircle2 className="h-3 w-3" />
                             <span>Chính xác</span>
                           </div>
                         ) : (
-                          <div className="flex items-center space-x-1 text-rose-500 text-xs font-black uppercase tracking-widest bg-rose-50 px-3 py-1 rounded-full">
+                          <div className="flex items-center space-x-1 text-rose-500 text-[10px] font-black uppercase tracking-widest bg-rose-50 px-3 py-1 rounded-full shrink-0">
                             <XCircle className="h-3 w-3" />
                             <span>Chưa đúng</span>
                           </div>
                         )}
                       </div>
-                                           <div className="space-y-4">
+
+                      <div className="space-y-4">
                         <div className="space-y-2">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Câu trả lời của bạn</p>
                           <div className={`p-4 rounded-2xl border-2 font-bold ${
                             isCorrect ? 'bg-accent-emerald/5 border-accent-emerald/20 text-accent-emerald' : 'bg-rose-50 border-rose-100 text-rose-600'
                           }`}>
-                            {answer.selected_choice_text || 'Chưa trả lời'}
+                            {answer.selected_choice_text ? (
+                              <div className="flex flex-wrap gap-2">
+                                {isOrder ? (
+                                  answer.selected_choice_text.split(' → ').map((text: string, i: number) => (
+                                    <span key={i} className="flex items-center">
+                                      <span className="px-2 py-1 bg-white/50 rounded-lg border border-current/10">{text}</span>
+                                      {i < answer.selected_choice_text.split(' → ').length - 1 && <ArrowRight className="h-4 w-4 mx-1 opacity-50" />}
+                                    </span>
+                                  ))
+                                ) : isMatch ? (
+                                  answer.selected_choice_text.split(' | ').map((text: string, i: number) => (
+                                    <div key={i} className="w-full flex items-center justify-between text-sm py-1 border-b border-rose-100/30 last:border-0">
+                                      <span className="opacity-70">{text.split(': ')[0]}</span>
+                                      <span className="ml-2">{text.split(': ')[1]}</span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  answer.selected_choice_text
+                                )}
+                              </div>
+                            ) : 'Chưa trả lời'}
                           </div>
                         </div>
+
                         {!isCorrect && (
                           <div className="space-y-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Đáp án đúng</p>
                             <div className="p-4 rounded-2xl border-2 border-accent-emerald bg-accent-emerald/5 text-accent-emerald font-bold">
-                              {answer.correct_choice_text}
+                              <div className="flex flex-wrap gap-2">
+                                {isOrder ? (
+                                  answer.correct_choice_text.split(' → ').map((text: string, i: number) => (
+                                    <span key={i} className="flex items-center">
+                                      <span className="px-2 py-1 bg-white/50 rounded-lg border border-current/10">{text}</span>
+                                      {i < answer.correct_choice_text.split(' → ').length - 1 && <ArrowRight className="h-4 w-4 mx-1 opacity-50" />}
+                                    </span>
+                                  ))
+                                ) : isMatch ? (
+                                  answer.correct_choice_text.split(' | ').map((text: string, i: number) => (
+                                    <div key={i} className="w-full flex items-center justify-between text-sm py-1 border-b border-accent-emerald/10 last:border-0">
+                                      <span className="opacity-70">{text.split(': ')[0]}</span>
+                                      <span className="ml-2">{text.split(': ')[1]}</span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  answer.correct_choice_text
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
