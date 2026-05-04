@@ -168,32 +168,33 @@ const Home: React.FC = () => {
       )}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
-        <div className="mb-16 text-center max-w-3xl mx-auto">
+        <div className="mb-12 sm:mb-16 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center space-x-2 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-white mb-6 animate-bounce">
             <Sparkles className="h-4 w-4 text-accent-amber" />
-            <span className="text-sm font-bold text-slate-600">Nâng cao kỹ năng của bạn ngay hôm nay!</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-600">Nâng cao kỹ năng của bạn ngay hôm nay!</span>
           </div>
-          <h1 className="text-5xl font-black tracking-tight sm:text-6xl mb-6 bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent">
-            Sẵn sàng cho các <span className="text-primary-600 underline decoration-accent-pink/30 decoration-8 underline-offset-4">Thử thách?</span>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-6 bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent leading-tight">
+            Sẵn sàng cho các <br className="hidden sm:block" />
+            <span className="text-primary-600 underline decoration-accent-pink/30 decoration-8 underline-offset-4 inline-block mt-2 sm:mt-0">Thử thách?</span>
           </h1>
-          <p className="text-xl text-slate-500 leading-relaxed mb-10">
+          <p className="text-lg sm:text-xl text-slate-500 leading-relaxed mb-10 px-4 sm:px-0">
             Chọn chủ đề, kiểm tra kiến thức và khẳng định bản thân! 🚀
           </p>
 
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12 sm:mb-16 px-4">
             <Link to="/create-quiz" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto rounded-2xl h-16 px-10 text-lg shadow-xl shadow-primary-500/10">
+              <Button size="lg" className="w-full sm:w-auto rounded-2xl h-14 sm:h-16 px-10 text-lg shadow-xl shadow-primary-500/10">
                 Tạo Quiz
               </Button>
             </Link>
             <Button 
               variant="outline" 
               size="lg" 
-              className="w-full sm:w-auto rounded-2xl h-16 px-10 text-lg border-2 border-slate-100 hover:border-rose-500/20 hover:bg-rose-50/50 transition-all"
+              className="w-full sm:w-auto rounded-2xl h-14 sm:h-16 px-10 text-lg border-2 border-slate-100 hover:border-rose-500/20 hover:bg-rose-50/50 transition-all"
               onClick={() => { setRoomId(''); setShowDuelModal(true); }}
             >
               <Sword className="h-5 w-5 mr-3 text-rose-500" />
-              Thách đấu trực tiếp
+              Thách đấu
             </Button>
           </div>
         </div>

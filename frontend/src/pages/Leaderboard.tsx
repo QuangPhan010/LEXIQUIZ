@@ -52,7 +52,7 @@ const Leaderboard: React.FC = () => {
             <Trophy className="h-10 w-10 text-accent-amber" />
           </div>
           <h1 className="text-5xl font-black tracking-tight mb-4 text-slate-900">Bảng xếp hạng toàn cầu</h1>
-          <p className="text-xl text-slate-500">Những bộ óc sáng giá nhất trong vũ trụ LEXIQUIZ.</p>
+          <p className="text-xl text-slate-500">Những bộ óc sáng giá nhất trong vũ trụ LexiQuiz.</p>
         </div>
 
         {/* Podium for Top 3 */}

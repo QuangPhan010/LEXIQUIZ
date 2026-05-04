@@ -57,45 +57,45 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
-            <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-6">
-              <Zap className="h-6 w-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-8 mb-12">
+          <Card className="p-6 sm:p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mb-4 sm:mb-6">
+              <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <p className="text-4xl font-black text-slate-900 mb-1">{stats?.results_taken || 0}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Bộ câu hỏi đã giải</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">{stats?.results_taken || 0}</p>
+            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Bộ câu hỏi đã giải</p>
           </Card>
 
-          <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
-            <div className="h-12 w-12 rounded-2xl bg-accent-emerald/10 text-accent-emerald flex items-center justify-center mb-6">
-              <Target className="h-6 w-6" />
+          <Card className="p-6 sm:p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-accent-emerald/10 text-accent-emerald flex items-center justify-center mb-4 sm:mb-6">
+              <Target className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <p className="text-4xl font-black text-slate-900 mb-1">{stats?.avg_score || 0}%</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Độ chính xác TB</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">{stats?.avg_score || 0}%</p>
+            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Độ chính xác TB</p>
           </Card>
 
-          <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
-            <div className="h-12 w-12 rounded-2xl bg-accent-amber/10 text-accent-amber flex items-center justify-center mb-6">
-              <TrendingUp className="h-6 w-6" />
+          <Card className="p-6 sm:p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-accent-amber/10 text-accent-amber flex items-center justify-center mb-4 sm:mb-6">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <p className="text-4xl font-black text-slate-900 mb-1">{user?.level}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Cấp độ thông thạo</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">{user?.level}</p>
+            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Cấp độ thông thạo</p>
           </Card>
 
-          <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
-            <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-6 ${user?.is_streak_active ? 'bg-orange-50 text-orange-500' : 'bg-slate-50 text-slate-300'}`}>
-              <Flame className={`h-6 w-6 ${user?.is_streak_active ? 'fill-orange-500' : ''}`} />
+          <Card className="p-6 sm:p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
+            <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 ${user?.is_streak_active ? 'bg-orange-50 text-orange-500' : 'bg-slate-50 text-slate-300'}`}>
+              <Flame className={`h-5 w-5 sm:h-6 sm:w-6 ${user?.is_streak_active ? 'fill-orange-500' : ''}`} />
             </div>
-            <p className={`text-4xl font-black mb-1 ${user?.is_streak_active ? 'text-slate-900' : 'text-slate-400'}`}>{user?.streak_count || 0}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Chuỗi hiện tại</p>
+            <p className={`text-3xl sm:text-4xl font-black mb-1 ${user?.is_streak_active ? 'text-slate-900' : 'text-slate-400'}`}>{user?.streak_count || 0}</p>
+            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Chuỗi hiện tại</p>
           </Card>
 
-          <Card className="p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all">
-            <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-6">
-              <Trophy className="h-6 w-6" />
+          <Card className="p-6 sm:p-8 border-0 shadow-xl bg-white group hover:scale-[1.02] transition-all sm:col-span-2 md:col-span-1">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4 sm:mb-6">
+              <Trophy className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <p className="text-4xl font-black text-slate-900 mb-1">{user?.max_streak || 0}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Chuỗi cao nhất</p>
+            <p className="text-3xl sm:text-4xl font-black text-slate-900 mb-1">{user?.max_streak || 0}</p>
+            <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Chuỗi cao nhất</p>
           </Card>
         </div>
 

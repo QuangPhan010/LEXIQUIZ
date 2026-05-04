@@ -52,12 +52,12 @@ const History: React.FC = () => {
     <div className="min-h-screen bg-mesh text-slate-900">
       <Navbar />
       
-      <main className="max-w-5xl mx-auto px-4 pt-32 pb-12">
-        <div className="flex items-center space-x-4 mb-12">
-          <div className="bg-primary-600 p-3.5 rounded-2xl shadow-lg shadow-primary-500/20">
-            <HistoryIcon className="h-7 w-7 text-white" />
+      <main className="max-w-5xl mx-auto px-4 pt-28 sm:pt-32 pb-12">
+        <div className="flex items-center space-x-4 mb-8 sm:mb-12">
+          <div className="bg-primary-600 p-3 sm:p-3.5 rounded-2xl shadow-lg shadow-primary-500/20">
+            <HistoryIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">Tiến trình của bạn</h1>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Tiến trình của bạn</h1>
         </div>
 
         {!loading && history.length > 0 && (

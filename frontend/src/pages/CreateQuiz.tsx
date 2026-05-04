@@ -315,16 +315,16 @@ const CreateQuiz: React.FC = () => {
     <div className="min-h-screen bg-mesh text-slate-900">
       <Navbar />
       
-      <main className="max-w-4xl mx-auto px-4 pt-32 pb-12">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+      <main className="max-w-4xl mx-auto px-4 pt-28 sm:pt-32 pb-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 sm:mb-10 gap-6">
           <div className="flex items-center space-x-3">
-            <div className="bg-primary-600 p-3 rounded-2xl shadow-lg shadow-primary-500/20">
-              <Plus className="h-6 w-6 text-white" />
+            <div className="bg-primary-600 p-2.5 sm:p-3 rounded-2xl shadow-lg shadow-primary-500/20 shrink-0">
+              <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">Tạo Quiz mới</h1>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">Tạo Quiz mới</h1>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -336,9 +336,9 @@ const CreateQuiz: React.FC = () => {
               variant="outline" 
               onClick={() => fileInputRef.current?.click()} 
               isLoading={aiLoading}
-              className="border-dashed border-2 hover:bg-accent-violet/5 hover:border-accent-violet hover:text-accent-violet transition-all"
+              className="border-dashed border-2 hover:bg-accent-violet/5 hover:border-accent-violet hover:text-accent-violet transition-all h-12 sm:h-10"
             >
-              <Zap className={`h-5 w-5 mr-2 ${aiLoading ? 'animate-pulse' : 'text-accent-amber fill-accent-amber'}`} />
+              <Zap className={`h-4 w-4 sm:h-5 sm:w-5 mr-2 ${aiLoading ? 'animate-pulse' : 'text-accent-amber fill-accent-amber'}`} />
               Nhập bằng AI
             </Button>
 
@@ -654,14 +654,14 @@ const CreateQuiz: React.FC = () => {
       </main>
 
       {/* Fixed Save Button at Bottom Right */}
-      <div className="fixed bottom-8 right-8 z-50">
+      <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 left-4 sm:left-auto">
         <Button 
           onClick={handleSubmit} 
           isLoading={loading} 
           size="lg"
-          className="px-10 py-6 h-auto text-xl rounded-3xl shadow-2xl shadow-primary-500/40 transform hover:scale-110 active:scale-95 transition-all duration-300"
+          className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-6 h-auto text-lg sm:text-xl rounded-2xl sm:rounded-3xl shadow-2xl shadow-primary-500/40 transform hover:scale-105 active:scale-95 transition-all duration-300"
         >
-          <Save className="h-6 w-6 mr-3" />
+          <Save className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
           Lưu Quiz ngay!
         </Button>
       </div>

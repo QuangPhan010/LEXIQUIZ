@@ -35,17 +35,17 @@ const Register: React.FC = () => {
       <div className="absolute inset-0 bg-white/10" />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <div className="bg-[#6366f1] p-2 rounded-xl shadow-lg">
-              <UserPlus className="h-6 w-6 text-white" />
+        <div className="text-center mb-6 px-4">
+          <div className="inline-flex items-center space-x-2 mb-6">
+            <div className="hover:rotate-6 transition-transform">
+              <img src="/Lexi_logo.svg" alt="LexiQuiz Logo" className="h-20 w-20 sm:h-24 sm:w-24" />
             </div>
-            <span className="text-2xl font-black text-[#1e293b] tracking-tight">
-              LEXIQUIZ
+            <span className="text-2xl sm:text-3xl font-black text-[#1e293b] tracking-tight">
+              LexiQuiz
             </span>
           </div>
-          <h1 className="text-5xl font-black text-[#1e293b] mb-2 tracking-tight">Gia nhập</h1>
-          <p className="text-[#64748b] font-bold">Gia nhập hàng ngũ và bắt đầu cuộc chơi!</p>
+          <h1 className="text-4xl sm:text-5xl font-black text-[#1e293b] mb-2 tracking-tight">Gia nhập</h1>
+          <p className="text-sm sm:text-base text-[#64748b] font-bold">Gia nhập hàng ngũ và bắt đầu cuộc chơi!</p>
         </div>
 
         <Card className="bg-white border-0 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-10">

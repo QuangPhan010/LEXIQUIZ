@@ -211,11 +211,11 @@ const Profile: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <Navbar />
       
-      <main className="max-w-7xl mx-auto px-4 pt-32 pb-20">
+      <main className="max-w-7xl mx-auto px-4 pt-28 sm:pt-32 pb-20">
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* Sidebar Navigation */}
-          <aside className="lg:w-80 shrink-0 space-y-6">
+          <aside className="w-full lg:w-80 shrink-0 space-y-6">
             <Card className="p-6 border-0 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-accent-violet" />
               <div className="flex items-center space-x-4 mb-6">
@@ -226,7 +226,7 @@ const Profile: React.FC = () => {
                 </div>
               </div>
               
-              <div className="space-y-2 pt-4 border-t border-slate-50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 pt-4 border-t border-slate-50">
                 {[
                   { id: 'profile', label: 'Cài đặt hồ sơ', icon: UserIcon },
                   { id: 'stats', label: 'Tiến trình & Kỹ năng', icon: Trophy },
@@ -266,16 +266,16 @@ const Profile: React.FC = () => {
           <div className="flex-1 min-w-0">
             
             {activeTab === 'profile' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                <Card className="border-0 shadow-2xl p-10">
-                  <div className="flex flex-col md:flex-row items-center gap-10 mb-12 pb-10 border-b border-slate-50">
+              <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                <Card className="border-0 shadow-2xl p-6 sm:p-10">
+                  <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-10 mb-8 sm:mb-12 pb-8 sm:pb-10 border-b border-slate-50">
                     <div className="relative">
                       <UserAvatar user={user} avatarOverride={avatarPreview} size="2xl" />
                       <button 
                         onClick={() => fileInputRef.current?.click()}
-                        className="absolute -bottom-2 -right-2 bg-white p-2.5 rounded-2xl shadow-xl border border-slate-100 text-primary-600 hover:text-primary-700 transition-all hover:scale-110 active:scale-95 z-20"
+                        className="absolute -bottom-2 -right-2 bg-white p-2 sm:p-2.5 rounded-2xl shadow-xl border border-slate-100 text-primary-600 hover:text-primary-700 transition-all hover:scale-110 active:scale-95 z-20"
                       >
-                        <Camera className="h-5 w-5" />
+                        <Camera className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       <input 
                         type="file" 
@@ -286,8 +286,8 @@ const Profile: React.FC = () => {
                       />
                     </div>
                     <div className="text-center md:text-left">
-                      <h2 className="text-3xl font-black text-slate-900 mb-2">Thông tin cá nhân</h2>
-                      <p className="text-slate-400 font-medium">Cập nhật ảnh đại diện và thông tin cơ bản.</p>
+                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">Thông tin cá nhân</h2>
+                      <p className="text-sm sm:text-base text-slate-400 font-medium">Cập nhật ảnh đại diện và thông tin cơ bản.</p>
                     </div>
                   </div>
 
